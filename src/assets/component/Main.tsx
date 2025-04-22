@@ -16,19 +16,27 @@ const Wrap = styled.div`
         rgba(203, 218, 239, 0.5)
     );
 `;
+const Inner = styled.div`
+    min-height: 600px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+`;
 
 export default function Main() {
     return (
         <Wrap>
-            <Bord />
-            {/* 모바일에서 숨김 처리 */}
-            <Calculator />
+            <Inner>
+                <Bord />
+                {/* 모바일에서 숨김 처리 */}
+                <Calculator />
 
-            {/* 모바일용 nav */}
-            <div>
-                <div>오늘의 내역</div>
-                <div>통계 보기</div>
-            </div>
+                {/* 모바일용 nav */}
+                <div>
+                    <div>오늘의 내역</div>
+                    <div>통계 보기</div>
+                </div>
+            </Inner>
         </Wrap>
     );
 }
