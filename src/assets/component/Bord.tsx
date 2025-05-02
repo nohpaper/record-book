@@ -143,6 +143,12 @@ const AddInput = styled.div`
                 font-size: 24px;
                 line-height: 110%;
                 text-align: right;
+                &.income {
+                    color: #df2121;
+                }
+                &.export {
+                    color: #1e82ac;
+                }
             }
         }
     }
@@ -307,8 +313,13 @@ export default function Bord() {
                                               onClick={() => {
                                                   /* TODO:: 동시에 두개 활성화될 수 없도록 작업 예정 */
                                                   const copy = { ...saveInput };
-                                                  copy.active[typedKey].isActive =
-                                                      !copy.active[typedKey].isActive;
+
+                                                  /* 1. 버튼 하나 on/off 기능을 만든다
+                                                   *  2. 어떤 버튼을 클릭했는지 확인한다
+                                                   *  3. 이전과 다른 버튼을 클릭했을 경우 모두 false되고 클릭한 것만 true
+                                                   *  4. 이전과 같은 버튼을 클릭했을 경우 prev 값의 반대
+                                                   *  */
+
                                                   setSaveInput({ ...copy });
                                               }}
                                               key={index}
@@ -318,21 +329,14 @@ export default function Bord() {
                                       );
                                   })
                                 : null}
-                            {/*<button
-                                type="button"
-                                onClick={() => {
-                                    const copy = { ...saveInput };
-                                    copy.active.export.isActive = !copy.active.export.isActive;
-                                    setSaveInput({ ...copy });
-                                }}
-                            >
-                                지출
-                            </button>*/}
                         </div>
                         <div className="money-input">
-                            <input type="text" />원
+                            <input
+                                type="text"
+                                className={`${saveInput.active.income.isActive ? "income" : "export"}`}
+                            />
+                            원
                         </div>
-                        {/* n원 */}
                     </div>
                     <div className="category-wrap">
                         {/* 카테고리 선택 및 메모 입력란 */}
