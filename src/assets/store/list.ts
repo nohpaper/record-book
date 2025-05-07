@@ -1,6 +1,30 @@
 import { create } from "zustand";
 
-export const useListStore = create(() => {
+interface ListItem {
+    index: number,
+    category: {
+        color: string,
+        name: string,
+    },
+    memo: string,
+    active: {
+        income: boolean,
+        export: boolean,
+    },
+    money: number,
+}
+
+interface DayList {
+    date: string;
+    list: ListItem[];
+}
+
+interface ListStore {
+    allList: DayList[];
+    dataPush: (nowTime: string, item: ListItem) => void;
+}
+
+export const useListStore = create<ListStore>((set) => {
     return {
         allList: [
             {
@@ -35,5 +59,29 @@ export const useListStore = create(() => {
                 ],
             },
         ],
+        dataPush: (nowTime, sendItem) =>
+            set((state) => {
+                let isFindDate = false;
+
+                const updatedAllList = state.allList.map((list) => {
+                    if (list.date === nowTime) {
+                        isFindDate = true;
+                        console.log("있", list, sendItem);
+                        return {
+                            ...list,
+                            list: [...list.list, sendItem],
+                        };
+                    }
+                    return list;
+                });
+                if (!isFindDate) {
+                    updatedAllList.push({
+                        date: nowTime,
+                        list: [sendItem],
+                    });
+                }
+
+                return { allList: updatedAllList };
+            }),
     };
 });
