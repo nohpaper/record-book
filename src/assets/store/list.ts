@@ -64,7 +64,6 @@ export const useListStore = create<ListStore>((set) => {
                 let isFindDate = false;
 
                 const updatedAllList = state.allList.map((item) => {
-                    console.log("list.ts에서 item", item, sendItem);
                     if (item.date === nowTime) {
                         isFindDate = true;
                         return {

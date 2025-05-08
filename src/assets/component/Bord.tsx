@@ -414,7 +414,7 @@ export default function Bord() {
                             } else {
                                 /*console.log("있음, 실행가능", sendItem);*/
                                 setSendItem({ ...saveCopy });
-                                datapush(nowTime, sendItem);
+                                datapush(nowTime, saveCopy);
                             }
                         }}
                     >
