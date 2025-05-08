@@ -157,7 +157,7 @@ const AddInput = styled.div`
                     margin: 0;
                 }
                 /* Firefox */
-                &[type='number'] {
+                &[type="number"] {
                     -moz-appearance: textfield;
                 }
             }
@@ -198,21 +198,21 @@ const AddInput = styled.div`
             border: none;
         }
     }
-    .send-wrap { 
-        position:absolute;
-        bottom:0;
-        left:50%;
-        margin-bottom:-30px;
-        transform:translateX(-50%);
-        button { 
-            width:40px;
-            height:40px;
-            color:#fff;
+    .send-wrap {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        margin-bottom: -30px;
+        transform: translateX(-50%);
+        button {
+            width: 40px;
+            height: 40px;
+            color: #fff;
             cursor: pointer;
             outline: none;
-            border:none;
-            border-radius:100%;
-            background-color:#7B7B7B;
+            border: none;
+            border-radius: 100%;
+            background-color: #7b7b7b;
         }
     }
 `;
@@ -232,34 +232,47 @@ const ActiveButton = styled.button<{ $activeText: string; $activeBackground: str
     }
 `;
 const DayList = styled.ul`
-    display:flex;
-    gap:10px;
+    display: flex;
+    gap: 10px;
     flex-direction: column;
-    padding-top:20px;
+    padding-top: 20px;
     margin-left: 14px;
-    > li { 
-        min-width:100%;
-        display:flex;
-        padding:17px 25px;
+    > li {
+        min-width: 100%;
+        display: flex;
+        padding: 17px 25px;
         box-sizing: border-box;
-        border-radius:40px;
-        background-color:rgba(255,255,255,0.7);
-        h5 { 
-            font-size:16px; font-weight:400; line-height:110%; margin-right:5px;
-        }
-        .active-button { 
-            font-size:14px;
+        border-radius: 40px;
+        background-color: rgba(255, 255, 255, 0.7);
+        h5 {
+            font-size: 16px;
             font-weight: 400;
-            padding:5px 14px;
-            border-radius:20px;
+            line-height: 110%;
+            margin-right: 5px;
+        }
+        .active-button {
+            font-size: 14px;
+            font-weight: 400;
+            padding: 5px 14px;
+            border-radius: 20px;
         }
         &.income {
-            h5 {color:#DF2121;}
-            .active-button { color:#DF2121; background-color:#FFC2C2; }
+            h5 {
+                color: #df2121;
+            }
+            .active-button {
+                color: #df2121;
+                background-color: #ffc2c2;
+            }
         }
         &.export {
-            h5 {color:#1C485B;}
-            .active-button {color:#1E82AC; background-color:#C1F6FF;}
+            h5 {
+                color: #1c485b;
+            }
+            .active-button {
+                color: #1e82ac;
+                background-color: #c1f6ff;
+            }
         }
     }
 `;
@@ -273,23 +286,23 @@ interface SaveInput {
     memo: string;
 }
 interface ListItem {
-    index: number,
+    index: number;
     category: {
-        color: string,
-        name: string,
-    },
-    memo: string,
+        color: string;
+        name: string;
+    };
+    memo: string;
     active: {
-        income: boolean,
-        export: boolean,
-    },
-    money: number,
+        income: boolean;
+        export: boolean;
+    };
+    money: number;
 }
 
 /* TODO::
-*       1.     money-input > input 태그 saveInput.active 내에 income / export 모두 false면 color:#000으로 변경
-*
-*  */
+ *       1.     money-input > input 태그 saveInput.active 내에 income / export 모두 false면 color:#000으로 변경
+ *
+ *  */
 
 export default function Bord() {
     const total = useTotalStore((state) => state.total);
@@ -330,7 +343,6 @@ export default function Bord() {
     const nowDay = moment().format("DD");
     const listFind = list.find((allList) => allList.date === nowTime);
 
-    console.log(listFind);
     return (
         <>
             <CategoryWrap>
@@ -376,43 +388,36 @@ export default function Bord() {
             </CategoryWrap>
             <div>
                 <AddInput>
-                    <form onSubmit={(event)=>{
-                        event.preventDefault();
-                        /*saveInput에서 가져올 것
-                        *  1. active 반복문으로 income와 export 중 어느 것이 true인지
-                        *      1-1. 만약, 하나라도 true가 아닐 경우 넘어갈 수 없음
-                        *  2. money, memo 가져오기
-                        *
-                        *
-                        *
-                        * 3. send 버튼 클릭해서 데이터 넘어가면 sendItem / saveInput  초기화
-                        * */
+                    <form
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            const saveCopy = { ...sendItem, active: { ...sendItem.active } };
 
+                            const activeIsActive = Object.keys(saveInput.active).map((key) => {
+                                const activeKey = key as keyof SaveInput["active"];
 
-                        const activeIsActive = Object.keys(saveInput.active).map((key) => {
-                            const activeKey = key as keyof SaveInput["active"];
-                            const saveCopy = { ...sendItem };
+                                saveCopy.active[activeKey] = false;
 
-                            saveCopy.active[activeKey] = false;
-                            if(saveInput.active[activeKey].isActive) {
+                                if (saveInput.active[activeKey].isActive) {
+                                    /*console.log("after", activeKey, saveInput.active[activeKey]);*/
+                                    saveCopy.index = saveCopy.index + 1;
+                                    saveCopy.active[activeKey] =
+                                        saveInput.active[activeKey].isActive;
+                                    saveCopy.money = saveInput.money;
+                                    saveCopy.memo = saveInput.memo;
+                                }
+                                return saveInput.active[activeKey].isActive;
+                            });
 
-                                saveCopy.active[activeKey] = saveInput.active[activeKey].isActive;
-                                saveCopy.money = saveInput.money;
-                                saveCopy.memo = saveInput.memo;
-
-                                setSendItem({...saveCopy});
+                            if (!activeIsActive.includes(true)) {
+                                /*console.log("없음, 실행불가");*/
+                            } else {
+                                /*console.log("있음, 실행가능", sendItem);*/
+                                setSendItem({ ...saveCopy });
+                                datapush(nowTime, sendItem);
                             }
-                            return saveInput.active[activeKey].isActive;
-                        });
-
-
-                        if(!activeIsActive.includes(true)){
-                            console.log("없음, 실행불가");
-                        }else {
-                            console.log("있음, 실행가능", sendItem);
-                            datapush(nowTime, sendItem);
-                        }
-                    }}>
+                        }}
+                    >
                         <div>
                             <button type="button" className="button-add">
                                 <span>+</span>
@@ -422,40 +427,50 @@ export default function Bord() {
                         <div className="money-wrap">
                             <div className="active-box">
                                 {saveInput.active
-                                    ? Object.entries(saveInput.active).map(([key, value], index) => {
-                                        const typedKey = key as keyof SaveInput["active"];
+                                    ? Object.entries(saveInput.active).map(
+                                          ([key, value], index) => {
+                                              const typedKey = key as keyof SaveInput["active"];
 
-                                        return (
-                                            <ActiveButton
-                                                $activeText={`${saveInput.active.income.isActive ? "#DF2121" : "#1E82AC"}`}
-                                                $activeBackground={`${saveInput.active.income.isActive ? "#FFC2C2" : "#C1F6FF"}`}
-                                                type="button"
-                                                className={`${saveInput.active[typedKey].isActive ? "active" : ""}`}
-                                                onClick={() => {
-                                                    const saveCopy = { ...saveInput };
+                                              return (
+                                                  <ActiveButton
+                                                      $activeText={`${saveInput.active.income.isActive ? "#DF2121" : "#1E82AC"}`}
+                                                      $activeBackground={`${saveInput.active.income.isActive ? "#FFC2C2" : "#C1F6FF"}`}
+                                                      type="button"
+                                                      className={`${saveInput.active[typedKey].isActive ? "active" : ""}`}
+                                                      onClick={() => {
+                                                          const saveCopy = { ...saveInput };
 
-                                                    if (currentKey !== key) {
-                                                        //이전 클릭 값과 다를 경우
-                                                        Object.entries(saveCopy.active).map(([allKeys, _]) =>{
-                                                            const allkey = allKeys as keyof SaveInput["active"];
-                                                            return saveCopy.active[allkey].isActive = false;
-                                                        });
-                                                        saveCopy.active[typedKey].isActive = true;
-                                                    }else {
-                                                        //이전 클릭 값과 같을 경우
-                                                        saveCopy.active[typedKey].isActive = !saveCopy.active[typedKey].isActive;
-                                                    }
+                                                          if (currentKey !== key) {
+                                                              //이전 클릭 값과 다를 경우
+                                                              Object.entries(saveCopy.active).map(
+                                                                  ([allKeys, _]) => {
+                                                                      const allkey =
+                                                                          allKeys as keyof SaveInput["active"];
+                                                                      return (saveCopy.active[
+                                                                          allkey
+                                                                      ].isActive = false);
+                                                                  },
+                                                              );
+                                                              saveCopy.active[typedKey].isActive =
+                                                                  true;
+                                                          } else {
+                                                              //이전 클릭 값과 같을 경우
+                                                              saveCopy.active[typedKey].isActive =
+                                                                  !saveCopy.active[typedKey]
+                                                                      .isActive;
+                                                          }
 
-                                                    prevKeyRef.current = key;  // 현재 key를 다음 클릭을 위한 prev로 저장
-                                                    setCurrentKey(key);
-                                                    setSaveInput({ ...saveCopy });
-                                                }}
-                                                key={index}
-                                            >
-                                                {value.korean}
-                                            </ActiveButton>
-                                        );
-                                    })
+                                                          prevKeyRef.current = key; // 현재 key를 다음 클릭을 위한 prev로 저장
+                                                          setCurrentKey(key);
+                                                          setSaveInput({ ...saveCopy });
+                                                      }}
+                                                      key={index}
+                                                  >
+                                                      {value.korean}
+                                                  </ActiveButton>
+                                              );
+                                          },
+                                      )
                                     : null}
                             </div>
                             <div className="money-input">
@@ -463,10 +478,10 @@ export default function Bord() {
                                     type="number"
                                     className={`${saveInput.active.income.isActive ? "income" : "export"}`}
                                     value={saveInput.money}
-                                    onChange={(event)=>{
+                                    onChange={(event) => {
                                         const saveCopy = { ...saveInput };
                                         saveCopy.money = Number(event.target.value);
-                                        setSaveInput({...saveCopy});
+                                        setSaveInput({ ...saveCopy });
                                     }}
                                 />
                                 원
@@ -475,11 +490,16 @@ export default function Bord() {
                         <div className="category-wrap">
                             {/* 카테고리 선택 및 메모 입력란 */}
                             <button type="button"></button>
-                            <input type="text" placeholder="메모란..." value={saveInput.memo} onChange={(event)=>{
-                                const saveCopy = { ...saveInput };
-                                saveCopy.memo = String(event.target.value);
-                                setSaveInput({...saveCopy});
-                            }}/>
+                            <input
+                                type="text"
+                                placeholder="메모란..."
+                                value={saveInput.memo}
+                                onChange={(event) => {
+                                    const saveCopy = { ...saveInput };
+                                    saveCopy.memo = String(event.target.value);
+                                    setSaveInput({ ...saveCopy });
+                                }}
+                            />
                         </div>
                         <div className="send-wrap">
                             <button type="submit">↓</button>
@@ -489,19 +509,25 @@ export default function Bord() {
                 <DayList>
                     {listFind
                         ? listFind.list.map((element, index) => {
-
-                            console.log(element, element.active.income);
-                              return <li key={index} className={`${element.active.income ? "income" : "export"}`}>
-                                  <div>
-                                      <p>{element.memo}</p>
-                                      <div className="category-box">
-                                          <span></span>
-                                          <span></span>
+                              /*console.log(element, element.active.income);*/
+                              return (
+                                  <li
+                                      key={index}
+                                      className={`${element.active.income ? "income" : "export"}`}
+                                  >
+                                      <div>
+                                          <p>{element.memo}</p>
+                                          <div className="category-box">
+                                              <span></span>
+                                              <span></span>
+                                          </div>
                                       </div>
-                                  </div>
-                                  <h5>{element.money}원</h5>
-                                  <span className="active-button">{element.active.income ? "수입" : "지출"}</span>
-                              </li>;
+                                      <h5>{element.money}원</h5>
+                                      <span className="active-button">
+                                          {element.active.income ? "수입" : "지출"}
+                                      </span>
+                                  </li>
+                              );
                           })
                         : null}
                 </DayList>

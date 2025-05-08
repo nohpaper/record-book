@@ -1,17 +1,17 @@
 import { create } from "zustand";
 
 interface ListItem {
-    index: number,
+    index: number;
     category: {
-        color: string,
-        name: string,
-    },
-    memo: string,
+        color: string;
+        name: string;
+    };
+    memo: string;
     active: {
-        income: boolean,
-        export: boolean,
-    },
-    money: number,
+        income: boolean;
+        export: boolean;
+    };
+    money: number;
 }
 
 interface DayList {
@@ -63,16 +63,16 @@ export const useListStore = create<ListStore>((set) => {
             set((state) => {
                 let isFindDate = false;
 
-                const updatedAllList = state.allList.map((list) => {
-                    if (list.date === nowTime) {
+                const updatedAllList = state.allList.map((item) => {
+                    console.log("list.ts에서 item", item, sendItem);
+                    if (item.date === nowTime) {
                         isFindDate = true;
-                        console.log("있", list, sendItem);
                         return {
-                            ...list,
-                            list: [...list.list, sendItem],
+                            ...item,
+                            list: [...item.list, sendItem],
                         };
                     }
-                    return list;
+                    return item;
                 });
                 if (!isFindDate) {
                     updatedAllList.push({
