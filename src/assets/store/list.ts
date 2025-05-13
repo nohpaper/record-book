@@ -11,7 +11,7 @@ interface ListItem {
         income: boolean;
         export: boolean;
     };
-    money: number;
+    money: number | null;
 }
 
 interface DayList {

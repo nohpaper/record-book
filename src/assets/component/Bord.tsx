@@ -168,6 +168,7 @@ const AddInput = styled.div`
         gap: 5px;
     }
     .category-wrap {
+        position: relative;
         display: flex;
         justify-content: space-between;
         padding: 15px 24px 20px;
@@ -197,6 +198,27 @@ const AddInput = styled.div`
             outline: none;
             border: none;
         }
+        .category-select {
+            position: absolute;
+            top: 70%;
+            left: 20px;
+            padding: 11px 16px;
+            border: 1px solid #e9e9e9;
+            border-radius: 20px;
+            box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15);
+            background-color: #fff;
+            z-index: 10;
+            .select-button-box {
+                display: flex;
+            }
+            .select-name {
+                padding-top: 10px;
+                input {
+                    font-size: 14px;
+                    font-weight: 400;
+                }
+            }
+        }
     }
     .send-wrap {
         position: absolute;
@@ -214,6 +236,42 @@ const AddInput = styled.div`
             border-radius: 100%;
             background-color: #7b7b7b;
         }
+    }
+`;
+const SelectButton = styled.button<{ $defaultColor: string }>`
+    width: 10px;
+    height: 12px;
+    position: relative;
+    margin: 5px;
+    outline: 0;
+    border: 0;
+    border-radius: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    background-color: ${(props) => props.$defaultColor};
+    &::before {
+        content: "";
+        width: 0;
+        height: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border-radius: 100%;
+        transform: translate(-50%, -50%);
+        transition: all 0.5s;
+        background-color: ${(props) => props.$defaultColor};
+    }
+    &.active::before {
+        width: 15px;
+        height: 15px;
+    }
+    span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: polygon(0 0, 0 0, 0 0);
     }
 `;
 const ActiveButton = styled.button<{ $activeText: string; $activeBackground: string }>`
@@ -240,15 +298,21 @@ const DayList = styled.ul`
     > li {
         min-width: 100%;
         display: flex;
+        justify-content: space-between;
         padding: 17px 25px;
         box-sizing: border-box;
         border-radius: 40px;
         background-color: rgba(255, 255, 255, 0.7);
+        .category-info {
+            width: 80px;
+        }
         h5 {
+            min-width: 90px;
+            margin-right: 5px;
             font-size: 16px;
             font-weight: 400;
-            line-height: 110%;
-            margin-right: 5px;
+            line-height: 140%;
+            text-align: right;
         }
         .active-button {
             font-size: 14px;
@@ -282,7 +346,7 @@ interface SaveInput {
         income: { korean: string; isActive: boolean };
         export: { korean: string; isActive: boolean };
     };
-    money: number;
+    money: number | null;
     memo: string;
 }
 interface ListItem {
@@ -296,11 +360,19 @@ interface ListItem {
         income: boolean;
         export: boolean;
     };
-    money: number;
+    money: number | null;
+}
+interface CategoryList {
+    id: number;
+    isActive: boolean;
+    color: string;
+    name: string;
 }
 
 /* TODO::
  *       1.     money-input > input 태그 saveInput.active 내에 income / export 모두 false면 color:#000으로 변경
+ *       2.     카테고리 클릭 시 노출되도록 작업
+ *       3.     카테고리 input 입력값 작업
  *
  *  */
 
@@ -309,6 +381,32 @@ export default function Bord() {
     const list = useListStore((state) => state.allList);
     const datapush = useListStore((state) => state.dataPush);
 
+    const [categoryList, setCategoryList] = useState<CategoryList[]>([
+        {
+            id: 0,
+            isActive: false,
+            color: "#FFA742",
+            name: "기본 카테고리1",
+        },
+        {
+            id: 1,
+            isActive: false,
+            color: "#9EF284",
+            name: "기본 카테고리2",
+        },
+        {
+            id: 2,
+            isActive: false,
+            color: "#B560F5",
+            name: "기본 카테고리3",
+        },
+        {
+            id: 3,
+            isActive: false,
+            color: "#030417",
+            name: "기본 카테고리4",
+        },
+    ]);
     const [saveInput, setSaveInput] = useState<SaveInput>({
         active: {
             income: {
@@ -320,7 +418,7 @@ export default function Bord() {
                 isActive: false,
             },
         },
-        money: 0,
+        money: null,
         memo: "",
     });
     const [sendItem, setSendItem] = useState<ListItem>({
@@ -334,7 +432,7 @@ export default function Bord() {
             income: false,
             export: false,
         },
-        money: 0,
+        money: null,
     });
     const [currentKey, setCurrentKey] = useState<string | null>(null);
     const prevKeyRef = useRef<string | null>(null);
@@ -342,6 +440,7 @@ export default function Bord() {
     const nowTime = moment().format("YYYY-MM-DD");
     const nowDay = moment().format("DD");
     const listFind = list.find((allList) => allList.date === nowTime);
+    const categorySelect = categoryList.filter((item) => item.isActive);
 
     return (
         <>
@@ -391,30 +490,54 @@ export default function Bord() {
                     <form
                         onSubmit={(event) => {
                             event.preventDefault();
-                            const saveCopy = { ...sendItem, active: { ...sendItem.active } };
+                            const sendCopy = { ...sendItem, active: { ...sendItem.active } };
 
                             const activeIsActive = Object.keys(saveInput.active).map((key) => {
                                 const activeKey = key as keyof SaveInput["active"];
 
-                                saveCopy.active[activeKey] = false;
+                                sendCopy.active[activeKey] = false; //active를 전체 false
 
                                 if (saveInput.active[activeKey].isActive) {
-                                    /*console.log("after", activeKey, saveInput.active[activeKey]);*/
-                                    saveCopy.index = saveCopy.index + 1;
-                                    saveCopy.active[activeKey] =
+                                    //isActive:ture 일 경우 sendCopy내부 내용 변경
+                                    sendCopy.index = sendCopy.index + 1;
+                                    sendCopy.active[activeKey] =
                                         saveInput.active[activeKey].isActive;
-                                    saveCopy.money = saveInput.money;
-                                    saveCopy.memo = saveInput.memo;
+                                    sendCopy.money = saveInput.money;
+                                    sendCopy.memo = saveInput.memo;
                                 }
-                                return saveInput.active[activeKey].isActive;
+                                return saveInput.active[activeKey].isActive; //isActive를 배열에 담아 return
                             });
 
-                            if (!activeIsActive.includes(true)) {
-                                /*console.log("없음, 실행불가");*/
-                            } else {
-                                /*console.log("있음, 실행가능", sendItem);*/
-                                setSendItem({ ...saveCopy });
-                                datapush(nowTime, saveCopy);
+                            if (activeIsActive.includes(true)) {
+                                //active.isActive에 true가 있을 경우
+                                if (categorySelect.length > 0) {
+                                    setSendItem({
+                                        ...sendCopy,
+                                        category: {
+                                            color: categorySelect[0].color,
+                                            name: categorySelect[0].name,
+                                        },
+                                    });
+                                } else {
+                                    setSendItem({ ...sendCopy });
+                                }
+
+                                datapush(nowTime, sendCopy);
+
+                                //list.ts에 데이터 전송 후 태그에 있는 값 초기화
+                                const saveCopy = {
+                                    ...saveInput,
+                                    active: {
+                                        income: { ...saveInput.active.income },
+                                        export: { ...saveInput.active.export },
+                                    },
+                                };
+
+                                saveCopy.active.income.isActive = false;
+                                saveCopy.active.export.isActive = false;
+                                saveCopy.money = null;
+                                saveCopy.memo = "";
+                                setSaveInput({ ...saveCopy });
                             }
                         }}
                     >
@@ -477,7 +600,7 @@ export default function Bord() {
                                 <input
                                     type="number"
                                     className={`${saveInput.active.income.isActive ? "income" : "export"}`}
-                                    value={saveInput.money}
+                                    value={saveInput.money ?? ""}
                                     onChange={(event) => {
                                         const saveCopy = { ...saveInput };
                                         saveCopy.money = Number(event.target.value);
@@ -489,7 +612,7 @@ export default function Bord() {
                         </div>
                         <div className="category-wrap">
                             {/* 카테고리 선택 및 메모 입력란 */}
-                            <button type="button"></button>
+                            <button type="button" onClick={() => {}}></button>
                             <input
                                 type="text"
                                 placeholder="메모란..."
@@ -500,6 +623,58 @@ export default function Bord() {
                                     setSaveInput({ ...saveCopy });
                                 }}
                             />
+                            <div className="category-select">
+                                <ul className="select-button-box">
+                                    {categoryList.map((element, index) => {
+                                        return (
+                                            <li key={index}>
+                                                <SelectButton
+                                                    type="button"
+                                                    $defaultColor={element.color}
+                                                    className={element.isActive ? "active" : ""}
+                                                    onClick={() => {
+                                                        const categoryCopy = [...categoryList];
+                                                        const clickCategory = categoryCopy.filter(
+                                                            (item) => item.id === element.id,
+                                                        ); //클릭한 카테고리와 동일한 id 찾기
+
+                                                        if (!clickCategory[0].isActive) {
+                                                            //클릭한 항목이 false일 경우
+                                                            categoryCopy.map((item) => {
+                                                                item.isActive = false;
+                                                            }); //전체 isActive false
+                                                            clickCategory[0].isActive = true; //클릭한 항목에만 isActive:true
+                                                        } else {
+                                                            //클릭한 항목이 true일 경우
+                                                            clickCategory[0].isActive = false; //클릭한 항목에만 isActive:false
+                                                        }
+                                                        setCategoryList([...categoryCopy]);
+                                                    }}
+                                                >
+                                                    <span>{element.name}</span>
+                                                </SelectButton>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                                <div className="select-name">
+                                    <input
+                                        type="text"
+                                        value={
+                                            categorySelect.length > 0 ? categorySelect[0].name : ""
+                                        }
+                                        onChange={(event) => {
+                                            const nameChange = categoryList.map((element) => {
+                                                if (categorySelect[0].id === element.id) {
+                                                    element.name = event.target.value;
+                                                }
+                                                return element;
+                                            });
+                                            setCategoryList(nameChange);
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         </div>
                         <div className="send-wrap">
                             <button type="submit">↓</button>
@@ -515,7 +690,7 @@ export default function Bord() {
                                       key={index}
                                       className={`${element.active.income ? "income" : "export"}`}
                                   >
-                                      <div>
+                                      <div className="category-info">
                                           <p>{element.memo}</p>
                                           <div className="category-box">
                                               <span></span>
