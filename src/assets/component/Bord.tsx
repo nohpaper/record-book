@@ -1,7 +1,7 @@
 import moment from "moment";
 import styled from "styled-components";
 
-import { useTotalStore } from "../store/group.ts";
+import { useDateTotalStore, useCategoryTotalStore } from "../store/group.ts";
 import { useListStore } from "../store/list.ts";
 import { useState, useRef } from "react";
 
@@ -13,9 +13,6 @@ const CategoryTab = styled.ul`
     position: absolute;
     top: -68px;
     li {
-        background-color: #fff;
-        border-radius: 40px;
-        box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.05);
         &:nth-of-type(n + 2) {
             margin-left: 10px;
         }
@@ -28,34 +25,70 @@ const CategoryTab = styled.ul`
             font-size: 16px;
             font-weight: 400;
             cursor: pointer;
-            background-color: transparent;
+            background-color: #fff;
+            border-radius: 40px;
+            box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.5s;
+            &.active,
+            &:hover {
+                color: #fff;
+                background-color: #ff5858;
+            }
         }
     }
 `;
 const DateList = styled.ul`
     width: 452px;
-    display: flex;
+    display: none;
     gap: 20px;
     flex-wrap: wrap;
-    > li {
-        padding: 15px 20px;
-        box-sizing: border-box;
-        border-radius: 40px;
-        background-color: rgba(255, 255, 255, 0.8);
-        b {
-            width: 172px;
-            display: block;
-            color: #3f3f3f;
-            font-size: 48px;
-            font-weight: 400;
-            text-align: right;
+    &.active {
+        display: flex;
+    }
+`;
+const DataGroup = styled.li<{
+    $backgroundColor: string;
+    $isGradient: boolean;
+    $isTextTransform: boolean;
+}>`
+    position: relative;
+    min-height: 160px;
+    padding: 15px 20px;
+    box-sizing: border-box;
+    border-radius: 40px;
+    background-color: rgba(255, 255, 255, 0.8);
+    background-image: ${(props) =>
+        props.$isGradient
+            ? `linear-gradient(0deg, ${props.$backgroundColor}, transparent)`
+            : "inherit"};
+    .category-name {
+        width: 172px;
+        display: block;
+        overflow: hidden;
+    }
+    b {
+        display: block;
+        color: #3f3f3f;
+        font-size: 32px;
+        font-weight: 400;
+        text-wrap: nowrap;
+        text-wrap-mode: nowrap;
+        text-align: right;
+        transition: all 3s linear;
+        &:hover {
+            transform: ${(props) => (props.$isTextTransform ? "translateX(-100%)" : "inherit")};
         }
     }
 `;
 const MoneyList = styled.div`
+    width: 100%;
+    position: absolute;
+    bottom: 27px;
+    left: 0;
     display: flex;
     gap: 10px;
-    padding-top: 24px;
+    padding: 24px 24px 0;
+    box-sizing: border-box;
     > div {
         width: 50%;
         .top4-category {
@@ -173,24 +206,6 @@ const AddInput = styled.div`
         justify-content: space-between;
         padding: 15px 24px 20px;
         box-sizing: border-box;
-        > button {
-            width: 15px;
-            height: 15px;
-            cursor: pointer;
-            outline: none;
-            border: none;
-            border-radius: 100%;
-            background: linear-gradient(
-                to right,
-                #ff2323,
-                #ff8c27,
-                #ffee31,
-                #2db64b,
-                #26a1ce,
-                #254c87,
-                #8027ee
-            );
-        }
         > input {
             width: 70%;
             font-size: 14px;
@@ -198,43 +213,30 @@ const AddInput = styled.div`
             outline: none;
             border: none;
         }
-        .category-select {
-            position: absolute;
-            top: 70%;
-            left: 20px;
-            padding: 11px 16px;
-            border: 1px solid #e9e9e9;
-            border-radius: 20px;
-            box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15);
-            background-color: #fff;
-            z-index: 10;
-            .select-button-box {
-                display: flex;
-            }
-            .select-name {
-                padding-top: 10px;
-                input {
-                    font-size: 14px;
-                    font-weight: 400;
-                }
-            }
-        }
     }
-    .send-wrap {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        margin-bottom: -30px;
-        transform: translateX(-50%);
-        button {
-            width: 40px;
-            height: 40px;
-            color: #fff;
-            cursor: pointer;
+`;
+
+const CategorySelectBox = styled.div<{ $isActive: boolean }>`
+    position: absolute;
+    top: 70%;
+    left: 20px;
+    padding: 11px 16px;
+    border: 1px solid #e9e9e9;
+    border-radius: 20px;
+    box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.15);
+    background-color: #fff;
+    z-index: 10;
+    display: ${(props) => (props.$isActive ? "block" : "none")};
+    .select-button-box {
+        display: flex;
+    }
+    .select-name {
+        padding-top: 10px;
+        input {
+            font-size: 14px;
+            font-weight: 400;
             outline: none;
             border: none;
-            border-radius: 100%;
-            background-color: #7b7b7b;
         }
     }
 `;
@@ -289,54 +291,94 @@ const ActiveButton = styled.button<{ $activeText: string; $activeBackground: str
         background-color: ${(props) => props.$activeBackground};
     }
 `;
+const CategorySelectButton = styled.button<{ $activeColor: string }>`
+    width: 15px;
+    height: 15px;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    border-radius: 100%;
+    background: linear-gradient(
+        to right,
+        #ff2323,
+        #ff8c27,
+        #ffee31,
+        #2db64b,
+        #26a1ce,
+        #254c87,
+        #8027ee
+    );
+    &::before {
+        content: "";
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-radius: 100%;
+        background-color: ${(props) => props.$activeColor};
+    }
+`;
 const DayList = styled.ul`
     display: flex;
     gap: 10px;
     flex-direction: column;
     padding-top: 20px;
     margin-left: 14px;
-    > li {
-        min-width: 100%;
-        display: flex;
-        justify-content: space-between;
-        padding: 17px 25px;
-        box-sizing: border-box;
-        border-radius: 40px;
-        background-color: rgba(255, 255, 255, 0.7);
-        .category-info {
-            width: 80px;
-        }
+`;
+const DayListItem = styled.li<{ $categoryColor: string }>`
+    min-width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 17px 25px;
+    box-sizing: border-box;
+    border-radius: 40px;
+    background-color: rgba(255, 255, 255, 0.7);
+    .category-info {
+        width: 80px;
+    }
+    h5 {
+        min-width: 90px;
+        margin-right: 5px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 140%;
+        text-align: right;
+    }
+    .active-button {
+        font-size: 14px;
+        font-weight: 400;
+        padding: 5px 14px;
+        border-radius: 20px;
+    }
+    &.income {
         h5 {
-            min-width: 90px;
-            margin-right: 5px;
-            font-size: 16px;
-            font-weight: 400;
-            line-height: 140%;
-            text-align: right;
+            color: #df2121;
         }
         .active-button {
-            font-size: 14px;
-            font-weight: 400;
-            padding: 5px 14px;
-            border-radius: 20px;
+            color: #df2121;
+            background-color: #ffc2c2;
         }
-        &.income {
-            h5 {
-                color: #df2121;
-            }
-            .active-button {
-                color: #df2121;
-                background-color: #ffc2c2;
-            }
+    }
+    &.export {
+        h5 {
+            color: #1c485b;
         }
-        &.export {
-            h5 {
-                color: #1c485b;
-            }
-            .active-button {
-                color: #1e82ac;
-                background-color: #c1f6ff;
-            }
+        .active-button {
+            color: #1e82ac;
+            background-color: #c1f6ff;
+        }
+    }
+    .category-box {
+        padding-top: 10px;
+        span {
+            width: 15px;
+            height: 15px;
+            display: block;
+            border-radius: 100%;
+            background-color: ${(props) => props.$categoryColor};
         }
     }
 `;
@@ -345,6 +387,10 @@ interface SaveInput {
     active: {
         income: { korean: string; isActive: boolean };
         export: { korean: string; isActive: boolean };
+    };
+    category: {
+        color: string;
+        name: string;
     };
     money: number | null;
     memo: string;
@@ -371,16 +417,17 @@ interface CategoryList {
 
 /* TODO::
  *       1.     money-input > input 태그 saveInput.active 내에 income / export 모두 false면 color:#000으로 변경
- *       2.     카테고리 클릭 시 노출되도록 작업
- *       3.     카테고리 input 입력값 작업
+ *       2.     카테고리 클릭 시 노출되도록 작업 ---> ok
+ *       3.     카테고리 input 입력값 작업 ----> ok
  *
  *  */
 
 export default function Bord() {
-    const total = useTotalStore((state) => state.total);
     const list = useListStore((state) => state.allList);
     const datapush = useListStore((state) => state.dataPush);
+    const todayMathSum = useDateTotalStore((state) => state.todayMathSum);
 
+    const [isCategoryActive, setIsCategoryActive] = useState(false);
     const [categoryList, setCategoryList] = useState<CategoryList[]>([
         {
             id: 0,
@@ -418,6 +465,10 @@ export default function Bord() {
                 isActive: false,
             },
         },
+        category: {
+            color: "",
+            name: "",
+        },
         money: null,
         memo: "",
     });
@@ -442,55 +493,114 @@ export default function Bord() {
     const listFind = list.find((allList) => allList.date === nowTime);
     const categorySelect = categoryList.filter((item) => item.isActive);
 
+    //통계 관련 변수
+    const dateTotal = useDateTotalStore((state) => state.total);
+    const categoryTotal = useCategoryTotalStore((state) => state.total);
+    const [activeTab, setActiveTab] = useState("date");
+
     return (
         <>
             <CategoryWrap>
                 <CategoryTab>
                     <li>
-                        <button type="button">날짜순</button>
+                        <button
+                            type="button"
+                            className={activeTab === "date" ? "active" : ""}
+                            onClick={() => {
+                                const tabName = "date";
+                                if (activeTab !== tabName) {
+                                    setActiveTab(tabName);
+                                }
+                            }}
+                        >
+                            날짜순
+                        </button>
                     </li>
                     <li>
-                        <button type="button">카테고리순</button>
+                        <button
+                            type="button"
+                            className={activeTab === "category" ? "active" : ""}
+                            onClick={() => {
+                                const tabName = "category";
+                                if (activeTab !== tabName) {
+                                    setActiveTab(tabName);
+                                }
+                            }}
+                        >
+                            카테고리순
+                        </button>
                     </li>
                 </CategoryTab>
-                <DateList>
-                    {Object.entries(total).map(([_key, value], index) => {
-                        return (
-                            <li key={index}>
-                                <b>{value.koreanName}</b>
-                                <MoneyList>
-                                    <div>
-                                        <ul className="top4-category">
-                                            {value.highCategory
-                                                ? value.highCategory.map((item) => {
-                                                      return <li>{item}</li>;
-                                                  })
-                                                : null}
-                                        </ul>
-                                        <p className="text-income">{value.incomeMoney}원</p>
+                <div>
+                    <DateList className={activeTab === "date" ? "active" : ""}>
+                        {Object.entries(dateTotal).map(([_key, value], index) => {
+                            return (
+                                <DataGroup $isGradient={false} $isTextTransform={false} key={index}>
+                                    <div className="category-name">
+                                        <b>{value.koreanName}</b>
                                     </div>
-                                    <div>
-                                        <ul className="top4-category">
-                                            {value.highCategory
-                                                ? value.highCategory.map((item) => {
-                                                      return <li>{item}</li>;
-                                                  })
-                                                : null}
-                                        </ul>
-                                        <p className="text-export">{value.exportMoney}원</p>
+                                    <MoneyList>
+                                        <div>
+                                            <ul className="top4-category">
+                                                {value.highCategory
+                                                    ? value.highCategory.map((item) => {
+                                                          return <li>{item}</li>;
+                                                      })
+                                                    : null}
+                                            </ul>
+                                            <p className="text-income">{value.incomeMoney}원</p>
+                                        </div>
+                                        <div>
+                                            <ul className="top4-category">
+                                                {value.highCategory
+                                                    ? value.highCategory.map((item) => {
+                                                          return <li>{item}</li>;
+                                                      })
+                                                    : null}
+                                            </ul>
+                                            <p className="text-export">{value.exportMoney}원</p>
+                                        </div>
+                                    </MoneyList>
+                                </DataGroup>
+                            );
+                        })}
+                    </DateList>
+                    <DateList className={activeTab === "category" ? "active" : ""}>
+                        {categoryTotal.map((element, index) => {
+                            return (
+                                <DataGroup
+                                    $backgroundColor={element.color}
+                                    $isGradient={true}
+                                    $isTextTransform={true}
+                                    key={index}
+                                >
+                                    <div className="category-name">
+                                        <b>{element.koreanName}</b>
                                     </div>
-                                </MoneyList>
-                            </li>
-                        );
-                    })}
-                </DateList>
+                                    <MoneyList>
+                                        <div>
+                                            <p className="text-income">{element.incomeMoney}원</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-export">{element.exportMoney}원</p>
+                                        </div>
+                                    </MoneyList>
+                                </DataGroup>
+                            );
+                        })}
+                    </DateList>
+                </div>
             </CategoryWrap>
             <div>
                 <AddInput>
                     <form
                         onSubmit={(event) => {
                             event.preventDefault();
-                            const sendCopy = { ...sendItem, active: { ...sendItem.active } };
+                            const sendCopy = {
+                                ...sendItem,
+                                active: { ...sendItem.active },
+                                category: { ...sendItem.category },
+                            };
 
                             const activeIsActive = Object.keys(saveInput.active).map((key) => {
                                 const activeKey = key as keyof SaveInput["active"];
@@ -502,25 +612,17 @@ export default function Bord() {
                                     sendCopy.index = sendCopy.index + 1;
                                     sendCopy.active[activeKey] =
                                         saveInput.active[activeKey].isActive;
+                                    sendCopy.category.color = saveInput.category.color;
+                                    sendCopy.category.name = saveInput.category.name;
                                     sendCopy.money = saveInput.money;
                                     sendCopy.memo = saveInput.memo;
                                 }
                                 return saveInput.active[activeKey].isActive; //isActive를 배열에 담아 return
                             });
 
-                            if (activeIsActive.includes(true)) {
+                            if (activeIsActive.includes(true) && sendCopy.money !== null) {
                                 //active.isActive에 true가 있을 경우
-                                if (categorySelect.length > 0) {
-                                    setSendItem({
-                                        ...sendCopy,
-                                        category: {
-                                            color: categorySelect[0].color,
-                                            name: categorySelect[0].name,
-                                        },
-                                    });
-                                } else {
-                                    setSendItem({ ...sendCopy });
-                                }
+                                setSendItem({ ...sendCopy });
 
                                 datapush(nowTime, sendCopy);
 
@@ -531,18 +633,32 @@ export default function Bord() {
                                         income: { ...saveInput.active.income },
                                         export: { ...saveInput.active.export },
                                     },
+                                    category: { ...sendItem.category },
                                 };
 
                                 saveCopy.active.income.isActive = false;
                                 saveCopy.active.export.isActive = false;
+                                saveCopy.category.color = "";
+                                saveCopy.category.name = "";
                                 saveCopy.money = null;
                                 saveCopy.memo = "";
                                 setSaveInput({ ...saveCopy });
+
+                                //categoryList.isActive 모두 false 로 초기화 (name은 초기화 X)
+                                const categoryCopy = [...categoryList];
+                                categoryCopy.map(function (element) {
+                                    element.isActive = false;
+                                });
+                                setCategoryList([...categoryCopy]);
+
+                                todayMathSum(nowTime);
+                            } else {
+                                alert("수입/지출 버튼과 금액은 필수 입력 항목입니다.");
                             }
                         }}
                     >
                         <div>
-                            <button type="button" className="button-add">
+                            <button type="submit" className="button-add">
                                 <span>+</span>
                             </button>
                         </div>
@@ -612,7 +728,14 @@ export default function Bord() {
                         </div>
                         <div className="category-wrap">
                             {/* 카테고리 선택 및 메모 입력란 */}
-                            <button type="button" onClick={() => {}}></button>
+                            <CategorySelectButton
+                                type="button"
+                                $activeColor={saveInput.category.color ?? "transparent"}
+                                onClick={() => {
+                                    //category 선택창 toggle
+                                    setIsCategoryActive((prev) => !prev);
+                                }}
+                            ></CategorySelectButton>
                             <input
                                 type="text"
                                 placeholder="메모란..."
@@ -623,7 +746,7 @@ export default function Bord() {
                                     setSaveInput({ ...saveCopy });
                                 }}
                             />
-                            <div className="category-select">
+                            <CategorySelectBox $isActive={isCategoryActive}>
                                 <ul className="select-button-box">
                                     {categoryList.map((element, index) => {
                                         return (
@@ -634,6 +757,7 @@ export default function Bord() {
                                                     className={element.isActive ? "active" : ""}
                                                     onClick={() => {
                                                         const categoryCopy = [...categoryList];
+                                                        const saveCopy = { ...saveInput };
                                                         const clickCategory = categoryCopy.filter(
                                                             (item) => item.id === element.id,
                                                         ); //클릭한 카테고리와 동일한 id 찾기
@@ -644,11 +768,18 @@ export default function Bord() {
                                                                 item.isActive = false;
                                                             }); //전체 isActive false
                                                             clickCategory[0].isActive = true; //클릭한 항목에만 isActive:true
+
+                                                            saveCopy.category.color =
+                                                                clickCategory[0].color;
                                                         } else {
                                                             //클릭한 항목이 true일 경우
                                                             clickCategory[0].isActive = false; //클릭한 항목에만 isActive:false
+                                                            saveCopy.category.color = "";
                                                         }
                                                         setCategoryList([...categoryCopy]);
+                                                        //클릭한 항목을 categoryList에 업데이트하고
+
+                                                        setSaveInput({ ...saveCopy });
                                                     }}
                                                 >
                                                     <span>{element.name}</span>
@@ -674,10 +805,7 @@ export default function Bord() {
                                         }}
                                     />
                                 </div>
-                            </div>
-                        </div>
-                        <div className="send-wrap">
-                            <button type="submit">↓</button>
+                            </CategorySelectBox>
                         </div>
                     </form>
                 </AddInput>
@@ -686,14 +814,16 @@ export default function Bord() {
                         ? listFind.list.map((element, index) => {
                               /*console.log(element, element.active.income);*/
                               return (
-                                  <li
+                                  <DayListItem
                                       key={index}
+                                      $categoryColor={
+                                          element.category.color ? element.category.color : ""
+                                      }
                                       className={`${element.active.income ? "income" : "export"}`}
                                   >
                                       <div className="category-info">
                                           <p>{element.memo}</p>
                                           <div className="category-box">
-                                              <span></span>
                                               <span></span>
                                           </div>
                                       </div>
@@ -701,7 +831,7 @@ export default function Bord() {
                                       <span className="active-button">
                                           {element.active.income ? "수입" : "지출"}
                                       </span>
-                                  </li>
+                                  </DayListItem>
                               );
                           })
                         : null}
