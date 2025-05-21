@@ -58,9 +58,9 @@ const DataGroup = styled.li<{
     border-radius: 40px;
     background-color: rgba(255, 255, 255, 0.8);
     background-image: ${(props) =>
-        props.$isGradient
-            ? `linear-gradient(0deg, ${props.$backgroundColor}, transparent)`
-            : "inherit"};
+            props.$isGradient
+                    ? `linear-gradient(0deg, ${props.$backgroundColor}, transparent)`
+                    : "inherit"};
     .category-name {
         width: 172px;
         display: block;
@@ -425,6 +425,7 @@ interface CategoryList {
 export default function Bord() {
     const list = useListStore((state) => state.allList);
     const datapush = useListStore((state) => state.dataPush);
+    const total = useDateTotalStore((state) => state.total);
     const todayMathSum = useDateTotalStore((state) => state.todayMathSum);
 
     const [isCategoryActive, setIsCategoryActive] = useState(false);
@@ -544,8 +545,8 @@ export default function Bord() {
                                             <ul className="top4-category">
                                                 {value.highCategory
                                                     ? value.highCategory.map((item) => {
-                                                          return <li>{item}</li>;
-                                                      })
+                                                        return <li>{item}</li>;
+                                                    })
                                                     : null}
                                             </ul>
                                             <p className="text-income">{value.incomeMoney}원</p>
@@ -554,8 +555,8 @@ export default function Bord() {
                                             <ul className="top4-category">
                                                 {value.highCategory
                                                     ? value.highCategory.map((item) => {
-                                                          return <li>{item}</li>;
-                                                      })
+                                                        return <li>{item}</li>;
+                                                    })
                                                     : null}
                                             </ul>
                                             <p className="text-export">{value.exportMoney}원</p>
@@ -624,7 +625,10 @@ export default function Bord() {
                                 //active.isActive에 true가 있을 경우
                                 setSendItem({ ...sendCopy });
 
+                                console.log(total.today);
+
                                 datapush(nowTime, sendCopy);
+                                todayMathSum(nowTime, sendCopy);
 
                                 //list.ts에 데이터 전송 후 태그에 있는 값 초기화
                                 const saveCopy = {
@@ -650,8 +654,6 @@ export default function Bord() {
                                     element.isActive = false;
                                 });
                                 setCategoryList([...categoryCopy]);
-
-                                todayMathSum(nowTime);
                             } else {
                                 alert("수입/지출 버튼과 금액은 필수 입력 항목입니다.");
                             }
@@ -667,49 +669,49 @@ export default function Bord() {
                             <div className="active-box">
                                 {saveInput.active
                                     ? Object.entries(saveInput.active).map(
-                                          ([key, value], index) => {
-                                              const typedKey = key as keyof SaveInput["active"];
+                                        ([key, value], index) => {
+                                            const typedKey = key as keyof SaveInput["active"];
 
-                                              return (
-                                                  <ActiveButton
-                                                      $activeText={`${saveInput.active.income.isActive ? "#DF2121" : "#1E82AC"}`}
-                                                      $activeBackground={`${saveInput.active.income.isActive ? "#FFC2C2" : "#C1F6FF"}`}
-                                                      type="button"
-                                                      className={`${saveInput.active[typedKey].isActive ? "active" : ""}`}
-                                                      onClick={() => {
-                                                          const saveCopy = { ...saveInput };
+                                            return (
+                                                <ActiveButton
+                                                    $activeText={`${saveInput.active.income.isActive ? "#DF2121" : "#1E82AC"}`}
+                                                    $activeBackground={`${saveInput.active.income.isActive ? "#FFC2C2" : "#C1F6FF"}`}
+                                                    type="button"
+                                                    className={`${saveInput.active[typedKey].isActive ? "active" : ""}`}
+                                                    onClick={() => {
+                                                        const saveCopy = { ...saveInput };
 
-                                                          if (currentKey !== key) {
-                                                              //이전 클릭 값과 다를 경우
-                                                              Object.entries(saveCopy.active).map(
-                                                                  ([allKeys, _]) => {
-                                                                      const allkey =
-                                                                          allKeys as keyof SaveInput["active"];
-                                                                      return (saveCopy.active[
-                                                                          allkey
-                                                                      ].isActive = false);
-                                                                  },
-                                                              );
-                                                              saveCopy.active[typedKey].isActive =
-                                                                  true;
-                                                          } else {
-                                                              //이전 클릭 값과 같을 경우
-                                                              saveCopy.active[typedKey].isActive =
-                                                                  !saveCopy.active[typedKey]
-                                                                      .isActive;
-                                                          }
+                                                        if (currentKey !== key) {
+                                                            //이전 클릭 값과 다를 경우
+                                                            Object.entries(saveCopy.active).map(
+                                                                ([allKeys, _]) => {
+                                                                    const allkey =
+                                                                        allKeys as keyof SaveInput["active"];
+                                                                    return (saveCopy.active[
+                                                                        allkey
+                                                                        ].isActive = false);
+                                                                },
+                                                            );
+                                                            saveCopy.active[typedKey].isActive =
+                                                                true;
+                                                        } else {
+                                                            //이전 클릭 값과 같을 경우
+                                                            saveCopy.active[typedKey].isActive =
+                                                                !saveCopy.active[typedKey]
+                                                                    .isActive;
+                                                        }
 
-                                                          prevKeyRef.current = key; // 현재 key를 다음 클릭을 위한 prev로 저장
-                                                          setCurrentKey(key);
-                                                          setSaveInput({ ...saveCopy });
-                                                      }}
-                                                      key={index}
-                                                  >
-                                                      {value.korean}
-                                                  </ActiveButton>
-                                              );
-                                          },
-                                      )
+                                                        prevKeyRef.current = key; // 현재 key를 다음 클릭을 위한 prev로 저장
+                                                        setCurrentKey(key);
+                                                        setSaveInput({ ...saveCopy });
+                                                    }}
+                                                    key={index}
+                                                >
+                                                    {value.korean}
+                                                </ActiveButton>
+                                            );
+                                        },
+                                    )
                                     : null}
                             </div>
                             <div className="money-input">
@@ -812,28 +814,28 @@ export default function Bord() {
                 <DayList>
                     {listFind
                         ? listFind.list.map((element, index) => {
-                              /*console.log(element, element.active.income);*/
-                              return (
-                                  <DayListItem
-                                      key={index}
-                                      $categoryColor={
-                                          element.category.color ? element.category.color : ""
-                                      }
-                                      className={`${element.active.income ? "income" : "export"}`}
-                                  >
-                                      <div className="category-info">
-                                          <p>{element.memo}</p>
-                                          <div className="category-box">
-                                              <span></span>
-                                          </div>
-                                      </div>
-                                      <h5>{element.money}원</h5>
-                                      <span className="active-button">
+                            /*console.log(element, element.active.income);*/
+                            return (
+                                <DayListItem
+                                    key={index}
+                                    $categoryColor={
+                                        element.category.color ? element.category.color : ""
+                                    }
+                                    className={`${element.active.income ? "income" : "export"}`}
+                                >
+                                    <div className="category-info">
+                                        <p>{element.memo}</p>
+                                        <div className="category-box">
+                                            <span></span>
+                                        </div>
+                                    </div>
+                                    <h5>{element.money}원</h5>
+                                    <span className="active-button">
                                           {element.active.income ? "수입" : "지출"}
                                       </span>
-                                  </DayListItem>
-                              );
-                          })
+                                </DayListItem>
+                            );
+                        })
                         : null}
                 </DayList>
             </div>

@@ -1,4 +1,18 @@
 import { create } from "zustand";
+interface ListItem {
+    index: number;
+    category: {
+        color: string;
+        name: string;
+    };
+    memo: string;
+    active: {
+        income: boolean;
+        export: boolean;
+    };
+    money: number | null;
+}
+
 interface DateTotalStoreType {
     date?: string;
     koreanName: string;
@@ -13,7 +27,7 @@ interface DateTotalStore {
         thisMonth: DateTotalStoreType;
         lastMonth: DateTotalStoreType;
     };
-    todayMathSum: (nowTime: string) => void;
+    todayMathSum: (nowTime: string, item: ListItem) => void;
 }
 /* 오늘, 주간 */
 export const useDateTotalStore = create<DateTotalStore>((set) => {
@@ -45,23 +59,40 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                 highCategory: [],
             },
         },
-        todayMathSum: (nowTime) =>
+        todayMathSum: (nowTime, sendItem) =>
             set((state) => {
-                if (state.total.today.date !== "") {
+                const total = state.total;
+                const totalCopy = {...total, today: {...total.today}};
+
+                if (total.today.date !== "") {
                     //공란이 아닐 경우
-                    if (state.total.today.date === nowTime) {
+                    if (total.today.date === nowTime) {
                         //내용이 같을 경우
                         // list.ts해당 날짜 맨 마지막 항목을 incomeMoney or exportMoney 에 합산
+
+                        const activeTrue= Object.keys(sendItem.active).find(key => sendItem.active[key] === true);
+                        if(String(activeTrue) === "income"){
+                            //income:true일 경우
+                            if(sendItem.money !== null){
+                                totalCopy.today.incomeMoney += sendItem.money;
+                            }
+                        }
+                        if(String(activeTrue) === "export") {
+                            //export:true일 경우
+                            if(sendItem.money !== null){
+                                totalCopy.today.exportMoney += sendItem.money;
+                            }
+                        }
                     } else {
                         //내용이 다를 경우
                         //money 두 항목 내용 삭제 -> incomeMoney or exportMoney 에 합산
                     }
                 } else {
-                    //공란일 경우
-                    //nowTime 삽입
+                    //공란일 경우 nowTime 삽입
+                    totalCopy.today.date = nowTime;
                 }
 
-                return {};
+                return { total: totalCopy };
             }),
     };
 });
