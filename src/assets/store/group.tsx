@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import moment from "moment";
+
 interface ListItem {
     index: number;
     category: {
@@ -14,7 +16,7 @@ interface ListItem {
 }
 
 interface DateTotalStoreType {
-    date?: string;
+    date?: string | number | null;
     koreanName: string;
     incomeMoney: number;
     exportMoney: number;
@@ -41,6 +43,7 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                 highCategory: [],
             },
             week: {
+                date: null,
                 koreanName: "주간",
                 incomeMoney: 0,
                 exportMoney: 0,
@@ -62,36 +65,95 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
         todayMathSum: (nowTime, sendItem) =>
             set((state) => {
                 const total = state.total;
-                const totalCopy = {...total, today: {...total.today}};
+                const totalCopy = {
+                    ...total,
+                    today: { ...total.today },
+                    week: { ...total.week },
+                    thisMonth: { ...total.thisMonth },
+                };
 
+                //주간 체크
+                const currentWeek = moment.utc(nowTime).local().week();
+                const firstMonthWeek = moment.utc(nowTime).startOf("month").week();
+                const week = currentWeek - firstMonthWeek + 1;
+
+                /* 1. 오늘의 합산 내역을 월간에 넣고, 월간은 합산 내역 부분을 배열로 생성하여 1주,2주별로 기록해둔다.
+                 * 2. 주간은 월간 []내의 내용중 해당하는 주차를 보여준다
+                 * 3. 월간은 []내의 내용을 모두 합산한다
+                 * */
+
+                //오늘
                 if (total.today.date !== "") {
                     //공란이 아닐 경우
                     if (total.today.date === nowTime) {
                         //내용이 같을 경우
                         // list.ts해당 날짜 맨 마지막 항목을 incomeMoney or exportMoney 에 합산
 
-                        const activeTrue= Object.keys(sendItem.active).find(key => sendItem.active[key] === true);
-                        if(String(activeTrue) === "income"){
+                        const activeTrue = Object.keys(sendItem.active).find((key) => {
+                            const typeKey = key as keyof (typeof sendItem)["active"];
+                            return sendItem.active[typeKey] === true;
+                        });
+
+                        if (String(activeTrue) === "income") {
                             //income:true일 경우
-                            if(sendItem.money !== null){
+                            if (sendItem.money !== null) {
                                 totalCopy.today.incomeMoney += sendItem.money;
                             }
                         }
-                        if(String(activeTrue) === "export") {
+                        if (String(activeTrue) === "export") {
                             //export:true일 경우
-                            if(sendItem.money !== null){
+                            if (sendItem.money !== null) {
                                 totalCopy.today.exportMoney += sendItem.money;
                             }
                         }
                     } else {
                         //내용이 다를 경우
                         //money 두 항목 내용 삭제 -> incomeMoney or exportMoney 에 합산
+
+                        totalCopy.today.incomeMoney = 0;
+                        totalCopy.today.exportMoney = 0;
+
+                        const activeTrue = Object.keys(sendItem.active).find((key) => {
+                            const typeKey = key as keyof (typeof sendItem)["active"];
+                            return sendItem.active[typeKey] === true;
+                        });
+
+                        if (String(activeTrue) === "income") {
+                            //income:true일 경우
+                            if (sendItem.money !== null) {
+                                totalCopy.today.incomeMoney += sendItem.money;
+                            }
+                        }
+                        if (String(activeTrue) === "export") {
+                            //export:true일 경우
+                            if (sendItem.money !== null) {
+                                totalCopy.today.exportMoney += sendItem.money;
+                            }
+                        }
                     }
                 } else {
                     //공란일 경우 nowTime 삽입
                     totalCopy.today.date = nowTime;
                 }
 
+                /*//주간
+                const currentWeek = moment.utc(nowTime).local().week();
+                const firstMonthWeek = moment.utc(nowTime).startOf("month").week();
+                const week = currentWeek - firstMonthWeek + 1;
+
+                if (total.week.date !== null) {
+                    //공란이 아닐 경우
+                    if (total.week.date === week) {
+                        //주차가 동일할경우
+                        totalCopy.week.incomeMoney = totalCopy.today.incomeMoney;
+                        totalCopy.week.exportMoney = totalCopy.today.exportMoney;
+                    } else {
+                        //주차가 동일하지 않을 경우
+                    }
+                } else {
+                    //공란일 경우 삽입
+                    totalCopy.week.date = week;
+                }*/
                 return { total: totalCopy };
             }),
     };
@@ -102,73 +164,73 @@ export const useDateMouthStore = create(() => {
     return {
         mouth: {
             january: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             february: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             march: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 view: "last",
             },
             april: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "this",
             },
             may: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             june: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             july: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             august: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             september: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             october: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             november: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
             december: {
-                incomeMoney: 0,
-                exportMoney: 0,
+                incomeMoney: [],
+                exportMoney: [],
                 highCategory: [],
                 view: "",
             },
