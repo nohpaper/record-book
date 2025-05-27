@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { useDateTotalStore, useCategoryTotalStore } from "../store/group.tsx";
 import { useListStore } from "../store/list.ts";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const CategoryWrap = styled.ul`
     position: relative;
@@ -92,18 +92,10 @@ const MoneyList = styled.div`
     > div {
         width: 50%;
         .top4-category {
+            height: 10px;
             display: flex;
             justify-content: flex-end;
             padding-bottom: 5px;
-            li {
-                width: 10px;
-                height: 10px;
-                border-radius: 100%;
-                background-color: #000;
-                &:nth-of-type(n + 2) {
-                    margin-left: 2px;
-                }
-            }
         }
         p {
             font-size: 20px;
@@ -117,6 +109,15 @@ const MoneyList = styled.div`
                 color: #1e82ac;
             }
         }
+    }
+`;
+const MoneyListInLi = styled.li<{ $top4Color: string }>`
+    width: 10px;
+    height: 100%;
+    border-radius: 100%;
+    background-color: ${(props) => (props.$top4Color ? props.$top4Color : "transparent")};
+    &:nth-of-type(n + 2) {
+        margin-left: 2px;
     }
 `;
 const AddInput = styled.div`
@@ -419,6 +420,7 @@ interface CategoryList {
  *       1.     money-input > input 태그 saveInput.active 내에 income / export 모두 false면 color:#000으로 변경
  *       2.     카테고리 클릭 시 노출되도록 작업 ---> ok
  *       3.     카테고리 input 입력값 작업 ----> ok
+ *       4.     데이터 group으로 넘기면서 생기는 합산 오류 확인 후 수정 예정
  *
  *  */
 
@@ -426,7 +428,8 @@ export default function Bord() {
     const list = useListStore((state) => state.allList);
     const datapush = useListStore((state) => state.dataPush);
     const total = useDateTotalStore((state) => state.total);
-    const todayMathSum = useDateTotalStore((state) => state.todayMathSum);
+    const moneyMathSum = useDateTotalStore((state) => state.moneyMathSum);
+    const dateUpdate = useDateTotalStore((state) => state.dateUpdate);
 
     const [isCategoryActive, setIsCategoryActive] = useState(false);
     const [categoryList, setCategoryList] = useState<CategoryList[]>([
@@ -499,6 +502,10 @@ export default function Bord() {
     const categoryTotal = useCategoryTotalStore((state) => state.total);
     const [activeTab, setActiveTab] = useState("date");
 
+    useEffect(() => {
+        dateUpdate(nowTime);
+    }, []);
+
     return (
         <>
             <CategoryWrap>
@@ -535,6 +542,18 @@ export default function Bord() {
                 <div>
                     <DateList className={activeTab === "date" ? "active" : ""}>
                         {Object.entries(dateTotal).map(([_key, value], index) => {
+                            const incomeCategorySortColor = Object.fromEntries(
+                                Object.entries(
+                                    dateTotal.today.income.highCategory.lengthColor,
+                                ).sort(([, a], [, b]) => b - a),
+                            );
+                            const exportCategorySortColor = Object.fromEntries(
+                                Object.entries(
+                                    dateTotal.today.export.highCategory.lengthColor,
+                                ).sort(([, a], [, b]) => b - a),
+                            );
+
+                            console.log(incomeCategorySortColor);
                             return (
                                 <DataGroup $isGradient={false} $isTextTransform={false} key={index}>
                                     <div className="category-name">
@@ -543,23 +562,87 @@ export default function Bord() {
                                     <MoneyList>
                                         <div>
                                             <ul className="top4-category">
-                                                {value.highCategory
-                                                    ? value.highCategory.map((item) => {
-                                                          return <li>{item}</li>;
-                                                      })
-                                                    : null}
+                                                {Object.keys(
+                                                    value.income.highCategory.lengthColor,
+                                                ).map((_item, subIndex) => {
+                                                    if (subIndex < 4) {
+                                                        console.log(
+                                                            Object.entries(incomeCategorySortColor)[
+                                                                subIndex
+                                                            ][0],
+                                                        );
+                                                        if (
+                                                            Object.entries(incomeCategorySortColor)[
+                                                                subIndex
+                                                            ][1] !== 0
+                                                        ) {
+                                                            return (
+                                                                <MoneyListInLi
+                                                                    key={subIndex}
+                                                                    $top4Color={
+                                                                        Object.entries(
+                                                                            incomeCategorySortColor,
+                                                                        )[subIndex][0]
+                                                                    }
+                                                                ></MoneyListInLi>
+                                                            );
+                                                        }
+                                                    }
+                                                })}
                                             </ul>
-                                            <p className="text-income">{value.incomeMoney}원</p>
+                                            <p className="text-income">
+                                                {Array.isArray(value.income.money)
+                                                    ? value.income.money.map((element) => {
+                                                          let mathSum = 0;
+                                                          mathSum += element;
+
+                                                          return mathSum;
+                                                      })
+                                                    : value.income.money}
+                                                원
+                                            </p>
                                         </div>
                                         <div>
                                             <ul className="top4-category">
-                                                {value.highCategory
-                                                    ? value.highCategory.map((item) => {
-                                                          return <li>{item}</li>;
-                                                      })
-                                                    : null}
+                                                {Object.keys(
+                                                    value.export.highCategory.lengthColor,
+                                                ).map((_item, subIndex) => {
+                                                    if (subIndex < 4) {
+                                                        console.log(
+                                                            Object.entries(exportCategorySortColor)[
+                                                                subIndex
+                                                            ][0],
+                                                        );
+                                                        if (
+                                                            Object.entries(exportCategorySortColor)[
+                                                                subIndex
+                                                            ][1] !== 0
+                                                        ) {
+                                                            return (
+                                                                <MoneyListInLi
+                                                                    key={subIndex}
+                                                                    $top4Color={
+                                                                        Object.entries(
+                                                                            exportCategorySortColor,
+                                                                        )[subIndex][0]
+                                                                    }
+                                                                ></MoneyListInLi>
+                                                            );
+                                                        }
+                                                    }
+                                                })}
                                             </ul>
-                                            <p className="text-export">{value.exportMoney}원</p>
+                                            <p className="text-export">
+                                                {Array.isArray(value.export.money)
+                                                    ? value.export.money.map((element) => {
+                                                          let mathSum = 0;
+                                                          mathSum += element;
+
+                                                          return mathSum;
+                                                      })
+                                                    : value.export.money}
+                                                원
+                                            </p>
                                         </div>
                                     </MoneyList>
                                 </DataGroup>
@@ -625,10 +708,10 @@ export default function Bord() {
                                 //active.isActive에 true가 있을 경우
                                 setSendItem({ ...sendCopy });
 
-                                console.log(total.week);
+                                console.log(total.today);
 
                                 datapush(nowTime, sendCopy);
-                                todayMathSum(nowTime, sendCopy);
+                                moneyMathSum(nowTime, sendCopy);
 
                                 //list.ts에 데이터 전송 후 태그에 있는 값 초기화
                                 const saveCopy = {

@@ -15,21 +15,34 @@ interface ListItem {
     money: number | null;
 }
 
-interface DateTotalStoreType {
+interface HighCategory {
+    isView: boolean;
+    lengthColor: {
+        "#FFA742": number;
+        "#9EF284": number;
+        "#B560F5": number;
+        "#030417": number;
+    };
+}
+interface moneyBase<T> {
+    money: T;
+    highCategory: HighCategory;
+}
+interface DateTotalStoreType<T> {
     date?: string | number | null;
     koreanName: string;
-    incomeMoney: number;
-    exportMoney: number;
-    highCategory: string[];
+    income: moneyBase<T>;
+    export: moneyBase<T>;
 }
 interface DateTotalStore {
     total: {
-        today: DateTotalStoreType;
-        week: DateTotalStoreType;
-        thisMonth: DateTotalStoreType;
-        lastMonth: DateTotalStoreType;
+        today: DateTotalStoreType<number>;
+        week: DateTotalStoreType<number>;
+        thisMonth: DateTotalStoreType<number[]>;
+        lastMonth: DateTotalStoreType<number[]>;
     };
-    todayMathSum: (nowTime: string, item: ListItem) => void;
+    dateUpdate: (nowTime: string) => void;
+    moneyMathSum: (nowTime: string, item: ListItem) => void;
 }
 /* 오늘, 주간 */
 export const useDateTotalStore = create<DateTotalStore>((set) => {
@@ -38,31 +51,126 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
             today: {
                 date: "",
                 koreanName: "오늘",
-                incomeMoney: 0,
+                income: {
+                    money: 0,
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
+                export: {
+                    money: 0,
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
+                /*incomeMoney: 0,
                 exportMoney: 0,
-                highCategory: [],
+                highCategory: {
+                    isView: false,
+                    lengthColor: {
+                        "#FFA742": 0,
+                        "#9EF284": 0,
+                        "#B560F5": 0,
+                        "#030417": 0,
+                    },
+                },*/
             },
             week: {
                 date: null,
                 koreanName: "주간",
-                incomeMoney: 0,
-                exportMoney: 0,
-                highCategory: [],
+                income: {
+                    money: 0,
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
+                export: {
+                    money: 0,
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
             },
             thisMonth: {
                 koreanName: "월간",
-                incomeMoney: 0,
-                exportMoney: 0,
-                highCategory: [],
+                income: {
+                    money: [],
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
+                export: {
+                    money: [],
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
             },
             lastMonth: {
                 koreanName: "저번달",
-                incomeMoney: 0,
-                exportMoney: 0,
-                highCategory: [],
+                income: {
+                    money: [],
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
+                export: {
+                    money: [],
+                    highCategory: {
+                        isView: false,
+                        lengthColor: {
+                            "#FFA742": 0,
+                            "#9EF284": 0,
+                            "#B560F5": 0,
+                            "#030417": 0,
+                        },
+                    },
+                },
             },
         },
-        todayMathSum: (nowTime, sendItem) =>
+        dateUpdate: (nowTime) => {
             set((state) => {
                 const total = state.total;
                 const totalCopy = {
@@ -77,10 +185,86 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                 const firstMonthWeek = moment.utc(nowTime).startOf("month").week();
                 const week = currentWeek - firstMonthWeek + 1;
 
-                /* 1. 오늘의 합산 내역을 월간에 넣고, 월간은 합산 내역 부분을 배열로 생성하여 1주,2주별로 기록해둔다.
-                 * 2. 주간은 월간 []내의 내용중 해당하는 주차를 보여준다
-                 * 3. 월간은 []내의 내용을 모두 합산한다
+                if (!total.today.date) {
+                    totalCopy.today.date = nowTime;
+                }
+                //주간
+                if (total.week.date === null) {
+                    totalCopy.week.date = week;
+                }
+
+                return { total: totalCopy };
+            });
+        },
+        moneyMathSum: (nowTime, sendItem) =>
+            set((state) => {
+                const total = state.total;
+                const totalCopy = {
+                    ...total,
+                    today: {
+                        ...total.today,
+                        income: {
+                            ...total.today.income,
+                            highCategory: {
+                                ...total.today.income.highCategory,
+                                lengthColor: { ...total.today.income.highCategory.lengthColor },
+                            },
+                        },
+                        export: {
+                            ...total.today.income,
+                            highCategory: {
+                                ...total.today.income.highCategory,
+                                lengthColor: { ...total.today.income.highCategory.lengthColor },
+                            },
+                        },
+                    },
+                    week: {
+                        ...total.week,
+                        income: {
+                            ...total.week.income,
+                            highCategory: {
+                                ...total.week.income.highCategory,
+                                lengthColor: { ...total.week.income.highCategory.lengthColor },
+                            },
+                        },
+                        export: {
+                            ...total.week.income,
+                            highCategory: {
+                                ...total.week.income.highCategory,
+                                lengthColor: { ...total.week.income.highCategory.lengthColor },
+                            },
+                        },
+                    },
+                    thisMonth: {
+                        ...total.thisMonth,
+                        income: {
+                            ...total.thisMonth.income,
+                            highCategory: {
+                                ...total.thisMonth.income.highCategory,
+                                lengthColor: { ...total.thisMonth.income.highCategory.lengthColor },
+                            },
+                        },
+                        export: {
+                            ...total.thisMonth.income,
+                            highCategory: {
+                                ...total.thisMonth.income.highCategory,
+                                lengthColor: { ...total.thisMonth.income.highCategory.lengthColor },
+                            },
+                        },
+                    },
+                };
+
+                /*
+                 * sendItem 의 category 색상 갯수를 확인,
+                 * highCategory는 리스트에 5개 이상 있을 경우 제일 높은 것 먼저 노출 / 제일 갯수가 높은 것 2개 노출됨
+                 * 오늘 : 오늘 날짜인지 확인, 같으면 합계 / 다르면 초기화
+                 * 월간 : 주간별로 카테고리 저장
                  * */
+
+                //주간 체크 변수
+                const currentWeek = moment.utc(nowTime).local().week();
+                const firstMonthWeek = moment.utc(nowTime).startOf("month").week();
+                const week = currentWeek - firstMonthWeek + 1;
 
                 //오늘
                 if (total.today.date !== "") {
@@ -97,21 +281,45 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                         if (String(activeTrue) === "income") {
                             //income:true일 경우
                             if (sendItem.money !== null) {
-                                totalCopy.today.incomeMoney += sendItem.money;
+                                if (
+                                    typeof totalCopy.thisMonth.income.money[week - 1] !== "number"
+                                ) {
+                                    totalCopy.thisMonth.income.money[week - 1] = 0;
+                                }
+                                totalCopy.today.income.money += sendItem.money;
+                                totalCopy.thisMonth.income.money[week - 1] += sendItem.money;
+
+                                const colorKey = sendItem.category
+                                    .color as keyof (typeof totalCopy.today.income.highCategory)["lengthColor"];
+                                if (sendItem.category.color !== "") {
+                                    totalCopy.today.income.highCategory.lengthColor[colorKey] += 1;
+                                }
                             }
                         }
                         if (String(activeTrue) === "export") {
                             //export:true일 경우
                             if (sendItem.money !== null) {
-                                totalCopy.today.exportMoney += sendItem.money;
+                                if (
+                                    typeof totalCopy.thisMonth.export.money[week - 1] !== "number"
+                                ) {
+                                    totalCopy.thisMonth.export.money[week - 1] = 0;
+                                }
+                                totalCopy.today.export.money += sendItem.money;
+                                totalCopy.thisMonth.export.money[week - 1] += sendItem.money;
+
+                                const colorKey = sendItem.category
+                                    .color as keyof (typeof totalCopy.today.export.highCategory)["lengthColor"];
+                                if (sendItem.category.color !== "") {
+                                    totalCopy.today.export.highCategory.lengthColor[colorKey] += 1;
+                                }
                             }
                         }
                     } else {
                         //내용이 다를 경우
                         //money 두 항목 내용 삭제 -> incomeMoney or exportMoney 에 합산
 
-                        totalCopy.today.incomeMoney = 0;
-                        totalCopy.today.exportMoney = 0;
+                        totalCopy.today.income.money = 0;
+                        totalCopy.today.export.money = 0;
 
                         const activeTrue = Object.keys(sendItem.active).find((key) => {
                             const typeKey = key as keyof (typeof sendItem)["active"];
@@ -121,39 +329,45 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                         if (String(activeTrue) === "income") {
                             //income:true일 경우
                             if (sendItem.money !== null) {
-                                totalCopy.today.incomeMoney += sendItem.money;
+                                if (
+                                    typeof totalCopy.thisMonth.income.money[week - 1] !== "number"
+                                ) {
+                                    totalCopy.thisMonth.income.money[week - 1] = 0;
+                                }
+                                totalCopy.today.income.money += sendItem.money;
+                                totalCopy.thisMonth.income.money[week - 1] += sendItem.money;
                             }
                         }
                         if (String(activeTrue) === "export") {
                             //export:true일 경우
                             if (sendItem.money !== null) {
-                                totalCopy.today.exportMoney += sendItem.money;
+                                if (
+                                    typeof totalCopy.thisMonth.export.money[week - 1] !== "number"
+                                ) {
+                                    totalCopy.thisMonth.export.money[week - 1] = 0;
+                                }
+                                totalCopy.today.export.money += sendItem.money;
+                                totalCopy.thisMonth.export.money[week - 1] += sendItem.money;
                             }
                         }
                     }
-                } else {
-                    //공란일 경우 nowTime 삽입
-                    totalCopy.today.date = nowTime;
                 }
 
-                /*//주간
-                const currentWeek = moment.utc(nowTime).local().week();
-                const firstMonthWeek = moment.utc(nowTime).startOf("month").week();
-                const week = currentWeek - firstMonthWeek + 1;
-
+                //주간
                 if (total.week.date !== null) {
                     //공란이 아닐 경우
                     if (total.week.date === week) {
                         //주차가 동일할경우
-                        totalCopy.week.incomeMoney = totalCopy.today.incomeMoney;
-                        totalCopy.week.exportMoney = totalCopy.today.exportMoney;
+                        totalCopy.week.income.money = totalCopy.thisMonth.income.money[week - 1];
+                        totalCopy.week.export.money = totalCopy.thisMonth.export.money[week - 1];
                     } else {
                         //주차가 동일하지 않을 경우
+                        //초기화
+                        totalCopy.week.date = week;
+                        totalCopy.week.income.money = 0;
+                        totalCopy.week.export.money = 0;
                     }
-                } else {
-                    //공란일 경우 삽입
-                    totalCopy.week.date = week;
-                }*/
+                }
                 return { total: totalCopy };
             }),
     };
