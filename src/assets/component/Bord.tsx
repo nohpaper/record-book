@@ -418,9 +418,6 @@ interface CategoryList {
 
 /* TODO::
  *       1.     money-input > input 태그 saveInput.active 내에 income / export 모두 false면 color:#000으로 변경
- *       2.     카테고리 클릭 시 노출되도록 작업 ---> ok
- *       3.     카테고리 input 입력값 작업 ----> ok
- *       4.     데이터 group으로 넘기면서 생기는 합산 오류 확인 후 수정 예정
  *
  *  */
 
@@ -506,6 +503,7 @@ export default function Bord() {
         dateUpdate(nowTime);
     }, []);
 
+    console.log(total);
     return (
         <>
             <CategoryWrap>
@@ -552,8 +550,6 @@ export default function Bord() {
                                     dateTotal.today.export.highCategory.lengthColor,
                                 ).sort(([, a], [, b]) => b - a),
                             );
-
-                            console.log(incomeCategorySortColor);
                             return (
                                 <DataGroup $isGradient={false} $isTextTransform={false} key={index}>
                                     <div className="category-name">
@@ -566,11 +562,6 @@ export default function Bord() {
                                                     value.income.highCategory.lengthColor,
                                                 ).map((_item, subIndex) => {
                                                     if (subIndex < 4) {
-                                                        console.log(
-                                                            Object.entries(incomeCategorySortColor)[
-                                                                subIndex
-                                                            ][0],
-                                                        );
                                                         if (
                                                             Object.entries(incomeCategorySortColor)[
                                                                 subIndex
@@ -608,11 +599,6 @@ export default function Bord() {
                                                     value.export.highCategory.lengthColor,
                                                 ).map((_item, subIndex) => {
                                                     if (subIndex < 4) {
-                                                        console.log(
-                                                            Object.entries(exportCategorySortColor)[
-                                                                subIndex
-                                                            ][0],
-                                                        );
                                                         if (
                                                             Object.entries(exportCategorySortColor)[
                                                                 subIndex
@@ -707,8 +693,6 @@ export default function Bord() {
                             if (activeIsActive.includes(true) && sendCopy.money !== null) {
                                 //active.isActive에 true가 있을 경우
                                 setSendItem({ ...sendCopy });
-
-                                console.log(total.today);
 
                                 datapush(nowTime, sendCopy);
                                 moneyMathSum(nowTime, sendCopy);

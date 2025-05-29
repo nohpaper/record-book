@@ -211,10 +211,10 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                             },
                         },
                         export: {
-                            ...total.today.income,
+                            ...total.today.export,
                             highCategory: {
-                                ...total.today.income.highCategory,
-                                lengthColor: { ...total.today.income.highCategory.lengthColor },
+                                ...total.today.export.highCategory,
+                                lengthColor: { ...total.today.export.highCategory.lengthColor },
                             },
                         },
                     },
@@ -228,10 +228,10 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                             },
                         },
                         export: {
-                            ...total.week.income,
+                            ...total.week.export,
                             highCategory: {
-                                ...total.week.income.highCategory,
-                                lengthColor: { ...total.week.income.highCategory.lengthColor },
+                                ...total.week.export.highCategory,
+                                lengthColor: { ...total.week.export.highCategory.lengthColor },
                             },
                         },
                     },
@@ -245,10 +245,10 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                             },
                         },
                         export: {
-                            ...total.thisMonth.income,
+                            ...total.thisMonth.export,
                             highCategory: {
-                                ...total.thisMonth.income.highCategory,
-                                lengthColor: { ...total.thisMonth.income.highCategory.lengthColor },
+                                ...total.thisMonth.export.highCategory,
+                                lengthColor: { ...total.thisMonth.export.highCategory.lengthColor },
                             },
                         },
                     },
