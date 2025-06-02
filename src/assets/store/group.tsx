@@ -39,7 +39,7 @@ interface DateTotalStore {
         today: DateTotalStoreType<number>;
         week: DateTotalStoreType<number>;
         thisMonth: DateTotalStoreType<number[]>;
-        lastMonth: DateTotalStoreType<number[]>;
+        lastMonth?: DateTotalStoreType<number[]>;
     };
     dateUpdate: (nowTime: string) => void;
     moneyMathSum: (nowTime: string, item: ListItem) => void;
@@ -75,17 +75,6 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                         },
                     },
                 },
-                /*incomeMoney: 0,
-                exportMoney: 0,
-                highCategory: {
-                    isView: false,
-                    lengthColor: {
-                        "#FFA742": 0,
-                        "#9EF284": 0,
-                        "#B560F5": 0,
-                        "#030417": 0,
-                    },
-                },*/
             },
             week: {
                 date: null,
@@ -116,6 +105,7 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                 },
             },
             thisMonth: {
+                date: null,
                 koreanName: "월간",
                 income: {
                     money: [],
@@ -142,7 +132,7 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                     },
                 },
             },
-            lastMonth: {
+            /*lastMonth: {
                 koreanName: "저번달",
                 income: {
                     money: [],
@@ -168,7 +158,7 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                         },
                     },
                 },
-            },
+            },*/
         },
         dateUpdate: (nowTime) => {
             set((state) => {
@@ -185,12 +175,26 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                 const firstMonthWeek = moment.utc(nowTime).startOf("month").week();
                 const week = currentWeek - firstMonthWeek + 1;
 
+                //월 체크
+                const currentMonth = moment().format("MM");
+                //const last = moment().clone().subtract(1, "months").format("MMMM");
+
                 if (!total.today.date) {
                     totalCopy.today.date = nowTime;
                 }
                 //주간
                 if (total.week.date === null) {
+                    //값이 들어있지 않으면 week 값 삽입
                     totalCopy.week.date = week;
+                }
+                //월간
+                if (total.thisMonth.date === null) {
+                    //값이 들어있지 않으면 week 값 삽입
+                    totalCopy.week.date = week;
+                } else if (total.thisMonth.date !== currentMonth) {
+                    //값이 들어있지만, currentMonth 값과 다를 경우
+                    //lastMonth 생성 및 thisMonth 값 초기화
+                    //moment().clone().subtract(1, "months").format("MMMM"); 값에 삽입
                 }
 
                 return { total: totalCopy };
@@ -372,83 +376,99 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
             }),
     };
 });
+interface MonthType {
+    incomeMoney: [];
+    exportMoney: [];
+    highCategory: [];
+}
+interface DateMonthStore {
+    month: {
+        january: MonthType;
+        february: MonthType;
+        march: MonthType;
+        april: MonthType;
+        may: MonthType;
+        june: MonthType;
+        july: MonthType;
+        august: MonthType;
+        september: MonthType;
+        october: MonthType;
+        november: MonthType;
+        december: MonthType;
+    };
+    test: () => void;
+}
 
 /* 한달별 */
-export const useDateMouthStore = create(() => {
+export const useDateMonthStore = create<DateMonthStore>((set) => {
     return {
-        mouth: {
+        month: {
             january: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             february: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             march: {
                 incomeMoney: [],
                 exportMoney: [],
-                view: "last",
+                highCategory: [],
             },
             april: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "this",
             },
             may: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             june: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             july: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             august: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             september: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             october: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             november: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
             december: {
                 incomeMoney: [],
                 exportMoney: [],
                 highCategory: [],
-                view: "",
             },
         },
+        test: () =>
+            set((state) => {
+                console.log(useDateTotalStore.getState().total);
+                return state;
+            }),
     };
 });
 

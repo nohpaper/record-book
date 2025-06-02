@@ -1,7 +1,7 @@
 import moment from "moment";
 import styled from "styled-components";
 
-import { useDateTotalStore, useCategoryTotalStore } from "../store/group.tsx";
+import { useDateTotalStore, useCategoryTotalStore, useDateMonthStore } from "../store/group.tsx";
 import { useListStore } from "../store/list.ts";
 import { useState, useRef, useEffect } from "react";
 
@@ -422,11 +422,15 @@ interface CategoryList {
  *  */
 
 export default function Bord() {
+    //list
     const list = useListStore((state) => state.allList);
     const datapush = useListStore((state) => state.dataPush);
+    //group
     const total = useDateTotalStore((state) => state.total);
     const moneyMathSum = useDateTotalStore((state) => state.moneyMathSum);
     const dateUpdate = useDateTotalStore((state) => state.dateUpdate);
+
+    const test = useDateMonthStore((state) => state.test);
 
     const [isCategoryActive, setIsCategoryActive] = useState(false);
     const [categoryList, setCategoryList] = useState<CategoryList[]>([
@@ -501,9 +505,9 @@ export default function Bord() {
 
     useEffect(() => {
         dateUpdate(nowTime);
+        test();
     }, []);
 
-    console.log(total);
     return (
         <>
             <CategoryWrap>
