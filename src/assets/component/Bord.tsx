@@ -430,7 +430,7 @@ export default function Bord() {
     const moneyMathSum = useDateTotalStore((state) => state.moneyMathSum);
     const dateUpdate = useDateTotalStore((state) => state.dateUpdate);
 
-    const test = useDateMonthStore((state) => state.test);
+    const monthSave = useDateMonthStore((state) => state.monthSave);
 
     const [isCategoryActive, setIsCategoryActive] = useState(false);
     const [categoryList, setCategoryList] = useState<CategoryList[]>([
@@ -505,9 +505,8 @@ export default function Bord() {
 
     useEffect(() => {
         dateUpdate(nowTime);
-        test();
+        monthSave();
     }, []);
-
     return (
         <>
             <CategoryWrap>
@@ -693,6 +692,7 @@ export default function Bord() {
                                 }
                                 return saveInput.active[activeKey].isActive; //isActive를 배열에 담아 return
                             });
+                            console.log(saveInput, sendCopy);
 
                             if (activeIsActive.includes(true) && sendCopy.money !== null) {
                                 //active.isActive에 true가 있을 경우

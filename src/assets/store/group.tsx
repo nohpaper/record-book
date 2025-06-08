@@ -43,6 +43,7 @@ interface DateTotalStore {
     };
     dateUpdate: (nowTime: string) => void;
     moneyMathSum: (nowTime: string, item: ListItem) => void;
+    thisMonthClearData: ()=>void;
 }
 /* 오늘, 주간 */
 export const useDateTotalStore = create<DateTotalStore>((set) => {
@@ -132,33 +133,6 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                     },
                 },
             },
-            /*lastMonth: {
-                koreanName: "저번달",
-                income: {
-                    money: [],
-                    highCategory: {
-                        isView: false,
-                        lengthColor: {
-                            "#FFA742": 0,
-                            "#9EF284": 0,
-                            "#B560F5": 0,
-                            "#030417": 0,
-                        },
-                    },
-                },
-                export: {
-                    money: [],
-                    highCategory: {
-                        isView: false,
-                        lengthColor: {
-                            "#FFA742": 0,
-                            "#9EF284": 0,
-                            "#B560F5": 0,
-                            "#030417": 0,
-                        },
-                    },
-                },
-            },*/
         },
         dateUpdate: (nowTime) => {
             set((state) => {
@@ -176,7 +150,7 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                 const week = currentWeek - firstMonthWeek + 1;
 
                 //월 체크
-                const currentMonth = moment().format("MM");
+                const currentMonth = moment().format("MM"); //이번달
                 //const last = moment().clone().subtract(1, "months").format("MMMM");
 
                 if (!total.today.date) {
@@ -193,8 +167,45 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                     totalCopy.week.date = week;
                 } else if (total.thisMonth.date !== currentMonth) {
                     //값이 들어있지만, currentMonth 값과 다를 경우
-                    //lastMonth 생성 및 thisMonth 값 초기화
-                    //moment().clone().subtract(1, "months").format("MMMM"); 값에 삽입
+                    totalCopy.lastMonth = {
+                        koreanName: "저번달",
+                        income: {
+                            money: totalCopy.thisMonth.income.money,
+                            highCategory: {
+                                isView: false,
+                                lengthColor: {
+                                    "#FFA742":
+                                        totalCopy.thisMonth.income.highCategory.lengthColor[
+                                            "#FFA742"
+                                        ],
+                                    "#9EF284":
+                                        totalCopy.thisMonth.income.highCategory.lengthColor[
+                                            "#9EF284"
+                                        ],
+                                    "#B560F5":
+                                        totalCopy.thisMonth.income.highCategory.lengthColor[
+                                            "#B560F5"
+                                        ],
+                                    "#030417":
+                                        totalCopy.thisMonth.income.highCategory.lengthColor[
+                                            "#030417"
+                                        ],
+                                },
+                            },
+                        },
+                        export: {
+                            money: totalCopy.thisMonth.export.money,
+                            highCategory: {
+                                isView: false,
+                                lengthColor: {
+                                    "#FFA742": totalCopy.thisMonth.export.highCategory.lengthColor["#FFA742"],
+                                    "#9EF284": totalCopy.thisMonth.export.highCategory.lengthColor["#9EF284"],
+                                    "#B560F5": totalCopy.thisMonth.export.highCategory.lengthColor["#B560F5"],
+                                    "#030417": totalCopy.thisMonth.export.highCategory.lengthColor["#030417"],
+                                },
+                            },
+                        },
+                    };
                 }
 
                 return { total: totalCopy };
@@ -279,7 +290,7 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
 
                         const activeTrue = Object.keys(sendItem.active).find((key) => {
                             const typeKey = key as keyof (typeof sendItem)["active"];
-                            return sendItem.active[typeKey] === true;
+                            return sendItem.active[typeKey];
                         });
 
                         if (String(activeTrue) === "income") {
@@ -327,7 +338,7 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
 
                         const activeTrue = Object.keys(sendItem.active).find((key) => {
                             const typeKey = key as keyof (typeof sendItem)["active"];
-                            return sendItem.active[typeKey] === true;
+                            return sendItem.active[typeKey];
                         });
 
                         if (String(activeTrue) === "income") {
@@ -374,107 +385,124 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                 }
                 return { total: totalCopy };
             }),
+        thisMonthClearData: () => set((state)=>({
+            total: {
+                ...state.total,
+                thisMonth: {
+                    date: null,
+                    koreanName: "월간",
+                    income: {
+                        money: [],
+                        highCategory: {
+                            isView: false,
+                            lengthColor: {
+                                "#FFA742": 0,
+                                "#9EF284": 0,
+                                "#B560F5": 0,
+                                "#030417": 0,
+                            },
+                        },
+                    },
+                    export: {
+                        money: [],
+                        highCategory: {
+                            isView: false,
+                            lengthColor: {
+                                "#FFA742": 0,
+                                "#9EF284": 0,
+                                "#B560F5": 0,
+                                "#030417": 0,
+                            },
+                        },
+                    },
+                },
+            }
+        })),
     };
 });
 interface MonthType {
-    incomeMoney: [];
-    exportMoney: [];
-    highCategory: [];
+    income: {
+        money: number[],
+        highCategory: {
+            lengthColor: {
+                "#FFA742": number,
+                "#9EF284": number,
+                "#B560F5": number,
+                "#030417": number,
+            },
+        },
+    };
+    export: {
+        money: number[],
+        highCategory: {
+            lengthColor: {
+                "#FFA742": number,
+                "#9EF284": number,
+                "#B560F5": number,
+                "#030417": number,
+            },
+        },
+    };
 }
 interface DateMonthStore {
     month: {
-        january: MonthType;
-        february: MonthType;
-        march: MonthType;
-        april: MonthType;
-        may: MonthType;
-        june: MonthType;
-        july: MonthType;
-        august: MonthType;
-        september: MonthType;
-        october: MonthType;
-        november: MonthType;
-        december: MonthType;
+        [key: string]: MonthType;
     };
-    test: () => void;
+    monthSave: () => void;
 }
 
 /* 한달별 */
 export const useDateMonthStore = create<DateMonthStore>((set) => {
     return {
-        month: {
-            january: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            february: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            march: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            april: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            may: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            june: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            july: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            august: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            september: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            october: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            november: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-            december: {
-                incomeMoney: [],
-                exportMoney: [],
-                highCategory: [],
-            },
-        },
-        test: () =>
+        month: {},
+        monthSave: () =>
             set((state) => {
-                console.log(useDateTotalStore.getState().total);
-                return state;
+                const monthCopy = {...state.month};
+                const momentLastMonth = moment().clone().subtract(1, "months").format("MMMM").toLowerCase(); //이전 달 영문, 소문자
+                const totalThisMonth = useDateTotalStore.getState().total.thisMonth;
+                const clearData = useDateTotalStore.getState().thisMonthClearData;
+
+                const currentMonth = moment().format("MM"); //이번달
+
+                if(totalThisMonth.date !== null && totalThisMonth.date !== currentMonth){
+                    //useDateMonthStore.month 에 저장
+                    monthCopy[momentLastMonth] = {
+                        income:{
+                            money: totalThisMonth.income.money,
+                            highCategory: {
+                                lengthColor: {
+                                    "#FFA742": totalThisMonth.income.highCategory.lengthColor["#FFA742"],
+                                    "#9EF284": totalThisMonth.income.highCategory.lengthColor["#FFA742"],
+                                    "#B560F5": totalThisMonth.income.highCategory.lengthColor["#FFA742"],
+                                    "#030417": totalThisMonth.income.highCategory.lengthColor["#FFA742"],
+                                },
+                            },
+                        },
+                        export:{
+                            money: totalThisMonth.export.money,
+                            highCategory: {
+                                lengthColor: {
+                                    "#FFA742": totalThisMonth.export.highCategory.lengthColor["#FFA742"],
+                                    "#9EF284": totalThisMonth.export.highCategory.lengthColor["#FFA742"],
+                                    "#B560F5": totalThisMonth.export.highCategory.lengthColor["#FFA742"],
+                                    "#030417": totalThisMonth.export.highCategory.lengthColor["#FFA742"],
+                                },
+                            },
+                        },
+                    }
+
+                    //thisMonth 내용 삭제
+                    clearData();
+                }
+
+                return { month: monthCopy };
             }),
     };
 });
 
 /*카테고리별(한달)*/
 // 수입/지출별 값은 한달 주기로 삭제됨
-export const useCategoryTotalStore = create(() => {
+export const useCategoryTotalStore = create((set) => {
     return {
         total: [
             {
@@ -502,5 +530,10 @@ export const useCategoryTotalStore = create(() => {
                 exportMoney: 0,
             },
         ],
+        categoryMath: ()=>
+            set((state)=>{
+
+                return state.total;
+            }),
     };
 });
