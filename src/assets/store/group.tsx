@@ -499,10 +499,20 @@ export const useDateMonthStore = create<DateMonthStore>((set) => {
             }),
     };
 });
+interface CategoryTotalType {
+    color: string;
+    koreanName: string;
+    incomeMoney: number;
+    exportMoney: number;
+}
+interface CategoryTotalStore {
+    total: CategoryTotalType[];
+    categoryMath: (nowTime: string, item: ListItem) => void;
+}
 
 /*카테고리별(한달)*/
 // 수입/지출별 값은 한달 주기로 삭제됨
-export const useCategoryTotalStore = create((set) => {
+export const useCategoryTotalStore = create<CategoryTotalStore>((set) => {
     return {
         total: [
             {
@@ -530,10 +540,30 @@ export const useCategoryTotalStore = create((set) => {
                 exportMoney: 0,
             },
         ],
-        categoryMath: ()=>
+        categoryMath: (nowTime, sendItem)=>
             set((state)=>{
+                const total = state.total;
 
-                return state.total;
+                const totalCopy = total.map((element)=>{
+                    if(element.color === sendItem.category.color){
+                        //내용이 같을 경우
+                        element.koreanName = sendItem.category.name; //이름 교체
+
+                        if(sendItem.active.income && sendItem.money !== null){
+                            //수입에 값 추가
+                            element.incomeMoney += sendItem.money;
+                        }
+                        if(sendItem.active.export && sendItem.money !== null){
+                            //지출에 값 추가
+                            element.exportMoney += sendItem.money;
+                        }
+                    }
+
+                    return element;
+                });
+
+                //TODO :: 카테고리별 이름은 계속 유지 / 금액 유지기간 설정
+                return { total: totalCopy };
             }),
     };
 });

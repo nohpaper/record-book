@@ -391,7 +391,7 @@ interface SaveInput {
     };
     category: {
         color: string;
-        name: string;
+        name?: string;
     };
     money: number | null;
     memo: string;
@@ -430,7 +430,11 @@ export default function Bord() {
     const moneyMathSum = useDateTotalStore((state) => state.moneyMathSum);
     const dateUpdate = useDateTotalStore((state) => state.dateUpdate);
 
+    //한달별
     const monthSave = useDateMonthStore((state) => state.monthSave);
+
+    //카테고리별
+    const categoryMath = useCategoryTotalStore((state) => state.categoryMath);
 
     const [isCategoryActive, setIsCategoryActive] = useState(false);
     const [categoryList, setCategoryList] = useState<CategoryList[]>([
@@ -472,7 +476,6 @@ export default function Bord() {
         },
         category: {
             color: "",
-            name: "",
         },
         money: null,
         memo: "",
@@ -675,6 +678,12 @@ export default function Bord() {
                                 category: { ...sendItem.category },
                             };
 
+                            //category color에 입력된 값을 categoryList.color에서 확인하고, name 값을 도출
+                            //도출된 값을 sendCopy.category.name에 삽입??
+                            const checkName = categoryList.find(
+                                (element) => element.color === saveInput.category.color,
+                            );
+
                             const activeIsActive = Object.keys(saveInput.active).map((key) => {
                                 const activeKey = key as keyof SaveInput["active"];
 
@@ -682,17 +691,20 @@ export default function Bord() {
 
                                 if (saveInput.active[activeKey].isActive) {
                                     //isActive:ture 일 경우 sendCopy내부 내용 변경
+
                                     sendCopy.index = sendCopy.index + 1;
                                     sendCopy.active[activeKey] =
                                         saveInput.active[activeKey].isActive;
                                     sendCopy.category.color = saveInput.category.color;
-                                    sendCopy.category.name = saveInput.category.name;
                                     sendCopy.money = saveInput.money;
                                     sendCopy.memo = saveInput.memo;
+
+                                    if(checkName !== undefined){
+                                        sendCopy.category.name = checkName.name;
+                                    }
                                 }
                                 return saveInput.active[activeKey].isActive; //isActive를 배열에 담아 return
                             });
-                            console.log(saveInput, sendCopy);
 
                             if (activeIsActive.includes(true) && sendCopy.money !== null) {
                                 //active.isActive에 true가 있을 경우
@@ -700,6 +712,8 @@ export default function Bord() {
 
                                 datapush(nowTime, sendCopy);
                                 moneyMathSum(nowTime, sendCopy);
+                                //카테고리별 정렬
+                                categoryMath(nowTime, sendCopy);
 
                                 //list.ts에 데이터 전송 후 태그에 있는 값 초기화
                                 const saveCopy = {
@@ -885,7 +899,6 @@ export default function Bord() {
                 <DayList>
                     {listFind
                         ? listFind.list.map((element, index) => {
-                              /*console.log(element, element.active.income);*/
                               return (
                                   <DayListItem
                                       key={index}
