@@ -269,13 +269,6 @@ export const useDateTotalStore = create<DateTotalStore>((set) => {
                     },
                 };
 
-                /*
-                 * sendItem 의 category 색상 갯수를 확인,
-                 * highCategory는 리스트에 5개 이상 있을 경우 제일 높은 것 먼저 노출 / 제일 갯수가 높은 것 2개 노출됨
-                 * 오늘 : 오늘 날짜인지 확인, 같으면 합계 / 다르면 초기화
-                 * 월간 : 주간별로 카테고리 저장
-                 * */
-
                 //주간 체크 변수
                 const currentWeek = moment.utc(nowTime).local().week();
                 const firstMonthWeek = moment.utc(nowTime).startOf("month").week();
